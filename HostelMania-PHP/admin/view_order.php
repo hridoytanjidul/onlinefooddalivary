@@ -5,6 +5,10 @@ include("../connection/connect.php");
 error_reporting(0);
 session_start();
 
+if (empty($_SESSION["adm_id"])) {
+    header('location:index.php');
+    exit;
+}
 ?>
 <head>
     <meta charset="utf-8">
@@ -134,13 +138,13 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
                         
                    
                         <div class="col-lg-12">
-                        <div class="card card-outline-primary">
+                        <div class="card card-outline-primary admin-table-card">
                             <div class="card-header">
                                 <h4 class="m-b-0 text-white">View Order</h4>
                             </div>
                              
                                 <div class="table-responsive m-t-20">
-                                    <table id="myTable" class="table table-bordered table-striped">
+                                    <table id="myTable" class="table table-bordered table-striped table-modern">
                                        
                                         <tbody>
                                            <?php

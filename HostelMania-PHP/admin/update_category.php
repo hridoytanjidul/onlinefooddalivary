@@ -6,31 +6,25 @@ error_reporting(0);
 session_start();
 
 
-if(isset($_POST['submit'] ))
-{
-    if(empty($_POST['c_name']))
-		{
-			$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>field Required!</strong>
-															</div>';
-		}
-	else
-	{
-		
-	
-	
-	
-       
-	
-	$mql = "update res_category set c_name ='$_POST[c_name]' where c_id='$_GET[cat_upd]'";
-	mysqli_query($db, $mql);
-			$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Updated!</strong> Successfully.</br></div>';
-	
-    
-	}
+if (isset($_POST['submit'])) {
+    $categoryName = trim($_POST['c_name'] ?? '');
+
+    if (empty($categoryName)) {
+        $error = '<div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>field Required!</strong>
+        </div>';
+    } else {
+        $categoryId = $_GET['cat_upd'] ?? 0;
+        $mql = $db->prepare("UPDATE res_category SET c_name = ? WHERE c_id = ?");
+        $mql->bind_param("si", $categoryName, $categoryId);
+        $mql->execute();
+
+        $success = '<div class="alert alert-success alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Updated!</strong> Successfully.</br>
+        </div>';
+    }
 
 }
 

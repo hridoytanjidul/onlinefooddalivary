@@ -105,16 +105,20 @@ else
         
             <div class="container-fluid">
             <div class="col-lg-12">
-                        <div class="card card-outline-primary">
-                            <div class="card-header">
-                                <h4 class="m-b-0 text-white">Admin Dashboard</h4>
+                        <div class="card card-outline-primary dashboard-shell">
+                            <div class="card-header dashboard-header">
+                                <div>
+                                    <span class="dashboard-kicker">Operations overview</span>
+                                    <h4 class="m-b-0 text-white">Admin Dashboard</h4>
+                                </div>
+                                <span class="dashboard-live-badge">Live</span>
                             </div>
-                     <div class="row">
+                     <div class="row dashboard-grid">
                    
                     <div class="col-md-3">
-                        <div class="card p-30">
+                        <div class="card p-30 dashboard-card">
                             <div class="media">
-                                <div class="media-left meida media-middle">
+                                <div class="media-left meida media-middle dashboard-icon">
                                     <span><i class="fa fa-home f-s-40 "></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
@@ -130,9 +134,9 @@ else
                     </div>
 					
 					 <div class="col-md-3">
-                        <div class="card p-30">
+                        <div class="card p-30 dashboard-card">
                             <div class="media">
-                                <div class="media-left meida media-middle">
+                                <div class="media-left meida media-middle dashboard-icon alt">
                                     <span><i class="fa fa-cutlery f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
@@ -148,9 +152,9 @@ else
                     </div>
 					
                     <div class="col-md-3">
-                        <div class="card p-30">
+                        <div class="card p-30 dashboard-card">
                             <div class="media">
-                                <div class="media-left meida media-middle">
+                                <div class="media-left meida media-middle dashboard-icon purple">
                                     <span><i class="fa fa-users f-s-40"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
@@ -166,9 +170,9 @@ else
                     </div>
 					
 					<div class="col-md-3">
-                        <div class="card p-30">
+                        <div class="card p-30 dashboard-card">
                             <div class="media">
-                                <div class="media-left meida media-middle"> 
+                                <div class="media-left meida media-middle dashboard-icon gold"> 
                                     <span><i class="fa fa-shopping-cart f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">

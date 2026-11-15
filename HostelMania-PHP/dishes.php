@@ -97,7 +97,10 @@ include_once 'product-action.php';
             </section>
             <div class="breadcrumb">
                 <div class="container">
-                   
+                   <div class="menu-page-header">
+                        <h2><?php echo $rows['title']; ?> Menu</h2>
+                        <p>Fresh, fast, and ready when you are.</p>
+                   </div>
                 </div>
             </div>
             <div class="container m-t-30">
@@ -281,7 +284,7 @@ $item_total += ($item["price"]*$item["quantity"]);
                                 </div>
                                 <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
-                                    <p>1086 Stockert Hollow Road, Seattle</p>
+                                    <p>Daffodil International University</p>
                                     <h5>Phone: 75696969855</a></h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>

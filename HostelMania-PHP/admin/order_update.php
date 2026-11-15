@@ -3,33 +3,29 @@
 include("../connection/connect.php");
 error_reporting(0);
 session_start();
-if(strlen($_SESSION['user_id'])==0)
-  { 
-header('location:../login.php');
+if (empty($_SESSION['adm_id'])) {
+    header('location:index.php');
+    exit;
 }
-else
-{
-  if(isset($_POST['update']))
-  {
-$form_id=$_GET['form_id'];
-$status=$_POST['status'];
-$remark=$_POST['remark'];
-$query=mysqli_query($db,"insert into remark(frm_id,status,remark) values('$form_id','$status','$remark')");
-$sql=mysqli_query($db,"update users_orders set status='$status' where o_id='$form_id'");
 
-echo "<script>alert('Form Details Updated Successfully');</script>";
+if (isset($_POST['update'])) {
+    $form_id = $_GET['form_id'];
+    $status = $_POST['status'];
+    $remark = $_POST['remark'];
+    $query = mysqli_query($db, "INSERT INTO remark(frm_id, status, remark) VALUES('$form_id', '$status', '$remark')");
+    $sql = mysqli_query($db, "UPDATE users_orders SET status = '$status' WHERE o_id = '$form_id'");
 
-  }
-
- ?>
+    echo "<script>alert('Form Details Updated Successfully');</script>";
+}
+?>
 <script language="javascript" type="text/javascript">
 function f2()
 {
 window.close();
-}ser
+}
 function f3()
 {
-window.print(); 
+window.print();
 }
 </script>
 
@@ -47,130 +43,94 @@ window.print();
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     
 <style type="text/css" rel="stylesheet">
-
-
-.indent-small {
-  margin-left: 5px;
+body {
+  background: linear-gradient(135deg, #f8f9ff 0%, #eef3ff 100%);
+  font-family: 'Open Sans', sans-serif;
 }
-.form-group.internal {
-  margin-bottom: 0;
+.order-modal-wrap {
+  max-width: 760px;
+  margin: 50px auto;
+  background: #ffffff;
+  border: 1px solid rgba(92,74,199,0.12);
+  border-radius: 26px;
+  box-shadow: 0 20px 45px rgba(31, 41, 55, 0.08);
+  padding: 28px 24px;
 }
-.dialog-panel {
-  margin: 10px;
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.datepicker-dropdown {
-  z-index: 200 !important;
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(111,122,145,0.12);
+  color: #425068;
+  font-size: 14px;
 }
-.panel-body {
-  background: #e5e5e5;
-  background: -moz-radial-gradient(center, ellipse cover, #e5e5e5 0%, #ffffff 100%);
-  background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #e5e5e5), color-stop(100%, #ffffff));
-  background: -webkit-radial-gradient(center, ellipse cover, #e5e5e5 0%, #ffffff 100%);
-  background: -o-radial-gradient(center, ellipse cover, #e5e5e5 0%, #ffffff 100%);
-  background: -ms-radial-gradient(center, ellipse cover, #e5e5e5 0%, #ffffff 100%);
-  background: radial-gradient(ellipse at center, #e5e5e5 0%, #ffffff 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e5e5e5', endColorstr='#ffffff', GradientType=1);
-  font: 600 15px "Open Sans", Arial, sans-serif;
+td:first-child {
+  width: 180px;
+  font-weight: 700;
+  color: #1f2b3d;
 }
-label.control-label {
-  font-weight: 600;
-  color: #777;
+select, textarea, input[type="submit"] {
+  border-radius: 12px;
 }
-
-
-
-
-
-
-
-
-table { 
-	width: 650px; 
-	border-collapse: collapse; 
-	margin: auto;
-	margin-top:50px;
-	}
-
-
-tr:nth-of-type(odd) { 
-	background: #eee; 
-	}
-
-th { 
-	background: #004684; 
-	color: white; 
-	font-weight: bold; 
-	}
-
-td, th { 
-	padding: 10px; 
-	border: 1px solid #ccc; 
-	text-align: left; 
-	font-size: 14px;
-	}
-
-
-
-	</style>
+select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(111,122,145,0.22);
+  background: #fff;
+}
+textarea {
+  min-height: 120px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #5c4ac7 0%, #4335a8 100%);
+  border: none;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ff7a59 0%, #ef5e43 100%);
+  border: none;
+}
+</style>
 </head>
 
 <body>
 
-<div style="margin-left:50px;">
+<div class="order-modal-wrap">
  <form name="updateticket" id="updatecomplaint" method="post"> 
- 
- 
- 
- 
-<table  border="0" cellspacing="0" cellpadding="0">
-     <tr >
+<table border="0" cellspacing="0" cellpadding="0">
+     <tr>
       <td><b>Form Number</b></td>
       <td><?php echo htmlentities($_GET['form_id']); ?></td>
     </tr>
 	<tr>
-      <td  >&nbsp;</td>
-
-      <td >&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
     </tr>
    
-    <tr >
+    <tr>
       <td><b>Status</b></td>
-      <td><select name="status" required="required" >
+      <td><select name="status" required="required">
       <option value="">Select Status</option>
       <option value="in process">On the way</option>
-    <option value="closed">Delivered</option>
-	 <option value="rejected">Cancelled</option>
-        
+      <option value="closed">Delivered</option>
+      <option value="rejected">Cancelled</option>
       </select></td>
     </tr>
 
-
-      <tr >
+    <tr>
       <td><b>Message</b></td>
-      <td><textarea name="remark" cols="50" rows="10" required="required"></textarea></td>
+      <td><textarea name="remark" required="required" placeholder="Add a delivery update or note..."></textarea></td>
     </tr>
-    
 
-
-        <tr>
+    <tr>
       <td><b>Action</b></td>
-      <td><input type="submit" name="update"  class="btn btn-primary" value="Submit">
-	   
-      <input name="Submit2" type="submit"  class="btn btn-danger"  value="Close this window " onClick="return f2();" style="cursor: pointer;"  /></td>
+      <td><input type="submit" name="update" class="btn btn-primary" value="Submit">
+      <input name="Submit2" type="submit" class="btn btn-danger" value="Close this window" onClick="return f2();" style="cursor: pointer;" /></td>
     </tr>
-
-
-
-     
-   
-   
-
- 
 </table>
  </form>
 </div>
 
 </body>
 </html>
-
-     <?php } ?>

@@ -7,60 +7,55 @@ session_start();
 error_reporting(0);
 include("../connection/connect.php");
 
-if(isset($_POST['submit'] ))
-{
-    if(empty($_POST['uname']) ||
-   	    empty($_POST['fname'])|| 
-		empty($_POST['lname']) ||  
-		empty($_POST['email'])||
-		empty($_POST['password'])||
-		empty($_POST['phone']))
-		{
-			$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>All fields Required!</strong>
-															</div>';
-		}
-	else
-	{
-		
+if (isset($_POST['submit'])) {
+    $username = trim($_POST['uname'] ?? '');
+    $firstName = trim($_POST['fname'] ?? '');
+    $lastName = trim($_POST['lname'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-	
-	
-    if(!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) // Validate email address
-    {
-       	$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>invalid email!</strong>
-															</div>';
+    if (empty($username) || empty($firstName) || empty($lastName) || empty($email) || empty($phone)) {
+        $error = '<div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>All fields Required!</strong>
+        </div>';
+    } else {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = '<div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>invalid email!</strong>
+            </div>';
+        } elseif (!empty($password) && strlen($password) < 6) {
+            $error = '<div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>Password must be >=6!</strong>
+            </div>';
+        } elseif (strlen($phone) < 10) {
+            $error = '<div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>invalid phone!</strong>
+            </div>';
+        } else {
+            $userId = $_GET['user_upd'] ?? 0;
+
+            if (!empty($password)) {
+                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+                $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ?, password = ? WHERE u_id = ?");
+                $mql->bind_param("ssssssi", $username, $firstName, $lastName, $email, $phone, $passwordHash, $userId);
+            } else {
+                $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ? WHERE u_id = ?");
+                $mql->bind_param("sssssi", $username, $firstName, $lastName, $email, $phone, $userId);
+            }
+
+            $mql->execute();
+
+            $success = '<div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>User Updated!</strong>
+            </div>';
+        }
     }
-	elseif(strlen($_POST['password']) < 6)
-	{
-		$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Password must be >=6!</strong>
-															</div>';
-	}
-	
-	elseif(strlen($_POST['phone']) < 10)
-	{
-		$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>invalid phone!</strong>
-															</div>';
-	}
-	
-	else{
-       
-	
-	$mql = "update users set username='$_POST[uname]', f_name='$_POST[fname]', l_name='$_POST[lname]',email='$_POST[email]',phone='$_POST[phone]',password='".md5($_POST[password])."' where u_id='$_GET[user_upd]' ";
-	mysqli_query($db, $mql);
-			$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>User Updated!</strong></div>';
-	
-    }
-	}
 
 }
 

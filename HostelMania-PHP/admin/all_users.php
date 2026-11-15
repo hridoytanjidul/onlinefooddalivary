@@ -116,17 +116,23 @@ session_start();
         <div class="page-wrapper">
      
             <div class="container-fluid">
+                <div class="admin-page-header">
+                    <div>
+                        <h2>Users</h2>
+                        <div class="subtle">Manage registered customers</div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-12">
                         
                         <div class="col-lg-12">
-                        <div class="card card-outline-primary">
+                        <div class="card card-outline-primary admin-table-card">
                             <div class="card-header">
                                 <h4 class="m-b-0 text-white">All Users</h4>
                             </div>
                              
                                 <div class="table-responsive m-t-40">
-                                    <table id="myTable" class="table table-bordered table-striped table-hover">
+                                    <table id="myTable" class="table table-bordered table-striped table-hover table-modern">
                                     <thead class="thead-dark">
                                             <tr>
                                                 <th>Username</th>
@@ -164,10 +170,9 @@ session_start();
 																								<td>'.$rows['phone'].'</td>
 																								<td>'.$rows['address'].'</td>																								
 																								<td>'.$rows['date'].'</td>
-																									 <td><a href="delete_users.php?user_del='.$rows['u_id'].'" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
-																									 <a href="update_users.php?user_upd='.$rows['u_id'].'" " class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
-																									</td></tr>';
-																		}	
+																									<td><a href="delete_users.php?user_del='.$rows['u_id'].'" class="btn btn-danger table-action-btn" title="Delete"><i class="fa fa-trash-o"></i></a> 
+																									<a href="update_users.php?user_upd='.$rows['u_id'].'" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
+																									</td></tr>';																		}	
 														}
 											?>
                                         </tbody>

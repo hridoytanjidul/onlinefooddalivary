@@ -5,61 +5,51 @@
 session_start(); 
 error_reporting(0); 
 include("connection/connect.php"); 
-if(isset($_POST['submit'] )) 
-{
-     if(empty($_POST['firstname']) || 
-   	    empty($_POST['lastname'])|| 
-		empty($_POST['email']) ||  
-		empty($_POST['phone'])||
-		empty($_POST['password'])||
-		empty($_POST['cpassword']) ||
-		empty($_POST['cpassword']))
-		{
-			$message = "All fields must be Required!";
-		}
-	else
-	{
-	
-	$check_username= mysqli_query($db, "SELECT username FROM users where username = '".$_POST['username']."' ");
-	$check_email = mysqli_query($db, "SELECT email FROM users where email = '".$_POST['email']."' ");
-		
+if (isset($_POST['submit'])) {
+    $username = trim($_POST['username'] ?? '');
+    $firstname = trim($_POST['firstname'] ?? '');
+    $lastname = trim($_POST['lastname'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $cpassword = $_POST['cpassword'] ?? '';
+    $address = trim($_POST['address'] ?? '');
 
-	
-	if($_POST['password'] != $_POST['cpassword']){  
-       	
-          echo "<script>alert('Password not match');</script>"; 
-    }
-	elseif(strlen($_POST['password']) < 6)  
-	{
-      echo "<script>alert('Password Must be >=6');</script>"; 
-	}
-	elseif(strlen($_POST['phone']) < 10)  
-	{
-      echo "<script>alert('Invalid phone number!');</script>"; 
-	}
+    if (empty($username) || empty($firstname) || empty($lastname) || empty($email) || empty($phone) || empty($password) || empty($cpassword)) {
+        $message = "All fields must be required!";
+    } else {
+        $check_username = $db->prepare("SELECT username FROM users WHERE username = ?");
+        $check_username->bind_param("s", $username);
+        $check_username->execute();
+        $check_username->store_result();
 
-    elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) 
-    {
-          echo "<script>alert('Invalid email address please type a valid email!');</script>"; 
-    }
-	elseif(mysqli_num_rows($check_username) > 0) 
-     {
-       echo "<script>alert('Username Already exists!');</script>"; 
-     }
-	elseif(mysqli_num_rows($check_email) > 0) 
-     {
-       echo "<script>alert('Email Already exists!');</script>"; 
-     }
-	else{
-       
-	 
-	$mql = "INSERT INTO users(username,f_name,l_name,email,phone,password,address) VALUES('".$_POST['username']."','".$_POST['firstname']."','".$_POST['lastname']."','".$_POST['email']."','".$_POST['phone']."','".md5($_POST['password'])."','".$_POST['address']."')";
-	mysqli_query($db, $mql);
-	
-		 header("refresh:0.1;url=login.php");
-    }
-	}
+        $check_email = $db->prepare("SELECT email FROM users WHERE email = ?");
+        $check_email->bind_param("s", $email);
+        $check_email->execute();
+        $check_email->store_result();
 
+        if ($password !== $cpassword) {
+            echo "<script>alert('Passwords do not match');</script>";
+        } elseif (strlen($password) < 6) {
+            echo "<script>alert('Password must be at least 6 characters');</script>";
+        } elseif (strlen($phone) < 10) {
+            echo "<script>alert('Invalid phone number!');</script>";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo "<script>alert('Invalid email address. Please enter a valid email!');</script>";
+        } elseif ($check_username->num_rows > 0) {
+            echo "<script>alert('Username already exists!');</script>";
+        } elseif ($check_email->num_rows > 0) {
+            echo "<script>alert('Email already exists!');</script>";
+        } else {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $mql = $db->prepare("INSERT INTO users(username, f_name, l_name, email, phone, password, address) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $mql->bind_param("sssssss", $username, $firstname, $lastname, $email, $phone, $passwordHash, $address);
+            $mql->execute();
+
+            header("refresh:0.1;url=login.php");
+            exit;
+        }
+    }
 }
 
 

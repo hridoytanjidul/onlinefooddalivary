@@ -6,40 +6,36 @@ error_reporting(0);
 session_start();
 
 
-if(isset($_POST['submit'] ))
-{
-    if(empty($_POST['c_name']))
-		{
-			$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>field Required!</strong>
-															</div>';
-		}
-	else
-	{
-		
-	$check_cat= mysqli_query($db, "SELECT c_name FROM res_category where c_name = '".$_POST['c_name']."' ");
+if (isset($_POST['submit'])) {
+    $categoryName = trim($_POST['c_name'] ?? '');
 
-	
-	
-	if(mysqli_num_rows($check_cat) > 0)
-     {
-    	$error = '<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Category already exist!</strong>
-															</div>';
-     }
-	else{
-       
-	
-	$mql = "INSERT INTO res_category(c_name) VALUES('".$_POST['c_name']."')";
-	mysqli_query($db, $mql);
-			$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																New Category Added Successfully.</br></div>';
-	
+    if (empty($categoryName)) {
+        $error = '<div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>field Required!</strong>
+        </div>';
+    } else {
+        $check_cat = $db->prepare("SELECT c_name FROM res_category WHERE c_name = ?");
+        $check_cat->bind_param("s", $categoryName);
+        $check_cat->execute();
+        $check_cat->store_result();
+
+        if ($check_cat->num_rows > 0) {
+            $error = '<div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>Category already exist!</strong>
+            </div>';
+        } else {
+            $mql = $db->prepare("INSERT INTO res_category(c_name) VALUES(?)");
+            $mql->bind_param("s", $categoryName);
+            $mql->execute();
+
+            $success = '<div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                New Category Added Successfully.</br>
+            </div>';
+        }
     }
-	}
 
 }
 

@@ -118,7 +118,13 @@ session_start();
             
           
             <div class="container-fluid">
-         
+                <div class="admin-page-header">
+                    <div>
+                        <h2>Menu</h2>
+                        <div class="subtle">Manage dishes and restaurant offerings</div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-12">
                         
@@ -129,15 +135,13 @@ session_start();
 						
 						    
                              <div class="col-lg-12">
-                        <div class="card card-outline-primary">
+                        <div class="card card-outline-primary admin-table-card">
                             <div class="card-header">
-                                <h4 class="m-b-0 text-white">All Menu</h4>
+                                <h4 class="m-b-0 text-white">All Menus</h4>
                             </div>
                                 
-								
                                 <div class="table-responsive m-t-40">
-                                    <table id="example23" class="display nowrap table table-hover table-striped table-bordered" cellspacing="0" width="100%">
-                                        <thead class="thead-dark">
+                                    <table id="example23" class="display nowrap table table-hover table-striped table-bordered table-modern" cellspacing="0" width="100%">                                        <thead class="thead-dark">
                                             <tr>
 											 <th>Restaurant</th>
                                                 <th>Dish</th>
@@ -179,10 +183,9 @@ session_start();
 																								</div></td>
 																								
 																							
-																									 <td><a href="delete_menu.php?menu_del='.$rows['d_id'].'" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
-																									 <a href="update_menu.php?menu_upd='.$rows['d_id'].'" class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
-																									</td></tr>';
-																					 
+																									<td><a href="delete_menu.php?menu_del='.$rows['d_id'].'" class="btn btn-danger table-action-btn" title="Delete"><i class="fa fa-trash-o"></i></a> 
+																									<a href="update_menu.php?menu_upd='.$rows['d_id'].'" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
+																									</td></tr>';																					 
 																						
 																						
 																		}	

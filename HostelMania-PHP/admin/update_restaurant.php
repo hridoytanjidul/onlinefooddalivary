@@ -56,10 +56,11 @@ if(isset($_POST['submit']))
 										{
 												
 												
-												$res_name=$_POST['res_name'];
-				                                 
-												$sql = "update restaurant set c_id='$_POST[c_name]', title='$res_name',email='$_POST[email]',phone='$_POST[phone]',url='$_POST[url]',o_hr='$_POST[o_hr]',c_hr='$_POST[c_hr]',o_days='$_POST[o_days]',address='$_POST[address]',image='$fnew' where rs_id='$_GET[res_upd]' ";  // store the submited data ino the database :images												mysqli_query($db, $sql); 
-													mysqli_query($db, $sql); 
+													$res_name = $_POST['res_name'];
+													$resId = $_GET['res_upd'] ?? 0;
+													$stmt = $db->prepare("UPDATE restaurant SET c_id = ?, title = ?, email = ?, phone = ?, url = ?, o_hr = ?, c_hr = ?, o_days = ?, address = ?, image = ? WHERE rs_id = ?");
+													$stmt->bind_param("isssssssssi", $_POST['c_name'], $res_name, $_POST['email'], $_POST['phone'], $_POST['url'], $_POST['o_hr'], $_POST['c_hr'], $_POST['o_days'], $_POST['address'], $fnew, $resId);
+													$stmt->execute();
 												move_uploaded_file($temp, $store);
 			  
 													$success = 	'<div class="alert alert-success alert-dismissible fade show">

@@ -58,8 +58,10 @@ if(isset($_POST['submit']))           //if upload btn is pressed
 												
 												
 				                                 
-												$sql = "update dishes set rs_id='$_POST[res_name]',title='$_POST[d_name]',slogan='$_POST[about]',price='$_POST[price]',img='$fnew' where d_id='$_GET[menu_upd]'";
-												mysqli_query($db, $sql); 
+												$menuId = $_GET['menu_upd'] ?? 0;
+												$stmt = $db->prepare("UPDATE dishes SET rs_id = ?, title = ?, slogan = ?, price = ?, img = ? WHERE d_id = ?");
+												$stmt->bind_param("issdsi", $_POST['res_name'], $_POST['d_name'], $_POST['about'], $_POST['price'], $fnew, $menuId);
+												$stmt->execute();
 												move_uploaded_file($temp, $store);
 			  
 													$success = 	'<div class="alert alert-success alert-dismissible fade show">

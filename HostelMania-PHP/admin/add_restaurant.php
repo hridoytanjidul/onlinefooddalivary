@@ -56,10 +56,10 @@ if(isset($_POST['submit']))
 										{
 												
 												
-												$res_name=$_POST['res_name'];
-				                                 
-												$sql = "INSERT INTO restaurant(c_id,title,email,phone,url,o_hr,c_hr,o_days,address,image) VALUE('".$_POST['c_name']."','".$res_name."','".$_POST['email']."','".$_POST['phone']."','".$_POST['url']."','".$_POST['o_hr']."','".$_POST['c_hr']."','".$_POST['o_days']."','".$_POST['address']."','".$fnew."')";  // store the submited data ino the database :images
-												mysqli_query($db, $sql); 
+												$res_name = $_POST['res_name'];
+												$stmt = $db->prepare("INSERT INTO restaurant(c_id, title, email, phone, url, o_hr, c_hr, o_days, address, image) VALUE(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+												$stmt->bind_param("isssssssss", $_POST['c_name'], $res_name, $_POST['email'], $_POST['phone'], $_POST['url'], $_POST['o_hr'], $_POST['c_hr'], $_POST['o_days'], $_POST['address'], $fnew);
+												$stmt->execute();
 												move_uploaded_file($temp, $store);
 			  
 													$success = 	'<div class="alert alert-success alert-dismissible fade show">

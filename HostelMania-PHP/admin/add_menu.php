@@ -58,8 +58,9 @@ if(isset($_POST['submit']))
 												
 												
 				                                 
-												$sql = "INSERT INTO dishes(rs_id,title,slogan,price,img) VALUE('".$_POST['res_name']."','".$_POST['d_name']."','".$_POST['about']."','".$_POST['price']."','".$fnew."')";  // store the submited data ino the database :images
-												mysqli_query($db, $sql); 
+												$stmt = $db->prepare("INSERT INTO dishes(rs_id, title, slogan, price, img) VALUE(?, ?, ?, ?, ?)");
+												$stmt->bind_param("issds", $_POST['res_name'], $_POST['d_name'], $_POST['about'], $_POST['price'], $fnew);
+												$stmt->execute();
 												move_uploaded_file($temp, $store);
 			  
 													$success = 	'<div class="alert alert-success alert-dismissible fade show">

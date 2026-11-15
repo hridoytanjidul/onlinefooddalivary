@@ -74,6 +74,10 @@ session_start();
             </div>
             <section class="restaurants-page">
                 <div class="container">
+                    <div class="page-intro text-center">
+                        <h2>Explore Restaurants</h2>
+                        <p>Discover the best local flavors and order your favorite meal in minutes.</p>
+                    </div>
                     <div class="row">
                         <div class="col-xs-12 col-sm-5 col-md-5 col-lg-3">
                         </div>

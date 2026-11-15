@@ -4,27 +4,25 @@
 include("../connection/connect.php");
 error_reporting(0);
 session_start();
-if(isset($_POST['submit']))
-{
-	$username = $_POST['username'];
-	$password = $_POST['password'];
-	
-	if(!empty($_POST["submit"])) 
-     {
-	$loginquery ="SELECT * FROM admin WHERE username='$username' && password='".md5($password)."'";
-	$result=mysqli_query($db, $loginquery);
-	$row=mysqli_fetch_array($result);
-	
-	                        if(is_array($row))
-								{
-                                    	$_SESSION["adm_id"] = $row['adm_id'];
-										header("refresh:1;url=dashboard.php");
-	                            } 
-							else
-							    {
-										echo "<script>alert('Invalid Username or Password!');</script>"; 
-                                }
-	 }
+if (isset($_POST['submit'])) {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (!empty($username) && !empty($password)) {
+        $stmt = $db->prepare("SELECT adm_id, password FROM admin WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row && (password_verify($password, $row['password']) || hash_equals($row['password'], md5($password)))) {
+            $_SESSION["adm_id"] = $row['adm_id'];
+            header("refresh:1;url=dashboard.php");
+            exit;
+        }
+
+        echo "<script>alert('Invalid Username or Password!');</script>";
+    }
 	
 	
 }

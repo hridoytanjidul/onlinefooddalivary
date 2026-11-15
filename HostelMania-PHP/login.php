@@ -67,29 +67,25 @@
 include("connection/connect.php"); 
 error_reporting(0); 
 session_start(); 
-if(isset($_POST['submit']))  
-{
-	$username = $_POST['username'];  
-	$password = $_POST['password'];
-	
-	if(!empty($_POST["submit"]))   
-     {
-	$loginquery ="SELECT * FROM users WHERE username='$username' && password='".md5($password)."'"; //selecting matching records
-	$result=mysqli_query($db, $loginquery); //executing
-	$row=mysqli_fetch_array($result);
-	
-	                        if(is_array($row)) 
-								{
-                                    	$_SESSION["user_id"] = $row['u_id']; 
-										 header("refresh:1;url=index.php"); 
-	                            } 
-							else
-							    {
-                                      	$message = "Invalid Username or Password!"; 
-                                }
-	 }
-	
-	
+if (isset($_POST['submit'])) {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (!empty($username) && !empty($password)) {
+        $stmt = $db->prepare("SELECT u_id, password FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row && (password_verify($password, $row['password']) || hash_equals($row['password'], md5($password)))) {
+            $_SESSION["user_id"] = $row['u_id'];
+            header("refresh:1;url=index.php");
+            exit;
+        }
+
+        $message = "Invalid Username or Password!";
+    }
 }
 ?>
   
