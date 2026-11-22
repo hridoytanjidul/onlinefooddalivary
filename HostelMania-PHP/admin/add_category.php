@@ -1,46 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
+include("auth.php");
 
-
-if (isset($_POST['submit'])) {
+$error = '';
+$success = '';
+if (isset($_POST['submit']) && !csrf_valid()) {
+    $error = admin_alert('danger', '<strong>' . CSRF_ERROR . '</strong>');
+} elseif (isset($_POST['submit'])) {
     $categoryName = trim($_POST['c_name'] ?? '');
 
-    if (empty($categoryName)) {
-        $error = '<div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <strong>field Required!</strong>
-        </div>';
+    if ($categoryName === '') {
+        $error = admin_alert('danger', '<strong>field Required!</strong>');
     } else {
-        $check_cat = $db->prepare("SELECT c_name FROM res_category WHERE c_name = ?");
+        $check_cat = $db->prepare("SELECT c_id FROM res_category WHERE c_name = ?");
         $check_cat->bind_param("s", $categoryName);
         $check_cat->execute();
         $check_cat->store_result();
 
         if ($check_cat->num_rows > 0) {
-            $error = '<div class="alert alert-danger alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <strong>Category already exist!</strong>
-            </div>';
+            $error = admin_alert('danger', '<strong>Category already exist!</strong>');
         } else {
             $mql = $db->prepare("INSERT INTO res_category(c_name) VALUES(?)");
             $mql->bind_param("s", $categoryName);
             $mql->execute();
 
-            $success = '<div class="alert alert-success alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                New Category Added Successfully.</br>
-            </div>';
+            $success = admin_alert('success', 'New Category Added Successfully.');
         }
     }
-
 }
-
-
 ?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -156,6 +145,7 @@ if (isset($_POST['submit'])) {
                                 <h4 class="m-b-0 text-white">Add Restaurant Category</h4>
                             </div>
                                 <form action='' method='post' >
+                                    <?php echo csrf_field(); ?>
                                     <div class="form-body">
                                        
                                         <hr>
@@ -203,35 +193,22 @@ if (isset($_POST['submit'])) {
                                            
 											
 											<?php
-												$sql="SELECT * FROM res_category order by c_id desc";
-												$query=mysqli_query($db,$sql);
-												
-													if(!mysqli_num_rows($query) > 0 )
-														{
-															echo '<td colspan="7"><center>No Categories-Data!</center></td>';
-														}
-													else
-														{				
-																	while($rows=mysqli_fetch_array($query))
-																		{
-																					
-																				
-																				
-																					echo ' <tr><td>'.$rows['c_id'].'</td>
-																								<td>'.$rows['c_name'].'</td>
-																								<td>'.$rows['date'].'</td>
-																								
-																									 <td><a href="delete_category.php?cat_del='.$rows['c_id'].'" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
-																									 <a href="update_category.php?cat_upd='.$rows['c_id'].'" " class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
-																									</td></tr>';
-																					 
-																						
-																						
-																		}	
-														}
-												
-											
-											?>
+												$sql = "SELECT * FROM res_category ORDER BY c_id DESC";
+												$query = mysqli_query($db, $sql);
+
+												if (mysqli_num_rows($query) == 0) {
+													echo '<tr><td colspan="4"><center>No Categories-Data!</center></td></tr>';
+												} else {
+													while ($rows = mysqli_fetch_array($query)) {
+														echo '<tr><td>' . (int) $rows['c_id'] . '</td>
+															<td>' . e($rows['c_name']) . '</td>
+															<td>' . e($rows['date']) . '</td>
+															<td>' . delete_button('delete_category.php', 'cat_del', $rows['c_id'], 'Delete this category?', 'btn btn-danger btn-flat btn-addon btn-xs m-b-10', 'font-size:16px') . '
+																<a href="update_category.php?cat_upd=' . (int) $rows['c_id'] . '" class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
+															</td></tr>';
+													}
+												}
+												?>
                                              
                                             
                                            

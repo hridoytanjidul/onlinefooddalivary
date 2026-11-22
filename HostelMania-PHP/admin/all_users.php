@@ -1,11 +1,8 @@
+<?php
+include("auth.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -149,32 +146,26 @@ session_start();
                                            
 											
 											<?php
-												$sql="SELECT * FROM users order by u_id desc";
-												$query=mysqli_query($db,$sql);
-												
-													if(!mysqli_num_rows($query) > 0 )
-														{
-															echo '<td colspan="7"><center>No Users</center></td>';
-														}
-													else
-														{				
-																	while($rows=mysqli_fetch_array($query))
-																		{
-																					
-																				
-																				
-																					echo ' <tr><td>'.$rows['username'].'</td>
-																								<td>'.$rows['f_name'].'</td>
-																								<td>'.$rows['l_name'].'</td>
-																								<td>'.$rows['email'].'</td>
-																								<td>'.$rows['phone'].'</td>
-																								<td>'.$rows['address'].'</td>																								
-																								<td>'.$rows['date'].'</td>
-																									<td><a href="delete_users.php?user_del='.$rows['u_id'].'" class="btn btn-danger table-action-btn" title="Delete"><i class="fa fa-trash-o"></i></a> 
-																									<a href="update_users.php?user_upd='.$rows['u_id'].'" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
-																									</td></tr>';																		}	
-														}
-											?>
+												$sql = "SELECT * FROM users ORDER BY u_id DESC";
+												$query = mysqli_query($db, $sql);
+
+												if (mysqli_num_rows($query) == 0) {
+													echo '<tr><td colspan="8"><center>No Users</center></td></tr>';
+												} else {
+													while ($rows = mysqli_fetch_array($query)) {
+														echo '<tr><td>' . e($rows['username']) . '</td>
+															<td>' . e($rows['f_name']) . '</td>
+															<td>' . e($rows['l_name']) . '</td>
+															<td>' . e($rows['email']) . '</td>
+															<td>' . e($rows['phone']) . '</td>
+															<td>' . e($rows['address']) . '</td>
+															<td>' . e($rows['date']) . '</td>
+															<td>' . delete_button('delete_users.php', 'user_del', $rows['u_id'], 'Delete this user?') . '
+																<a href="update_users.php?user_upd=' . (int) $rows['u_id'] . '" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
+															</td></tr>';
+													}
+												}
+												?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -194,7 +185,7 @@ session_start();
      
     </div>
     
-    <script src="js/lib/jquery/jquery.min.js"></script>>
+    <script src="js/lib/jquery/jquery.min.js"></script>
     <script src="js/lib/bootstrap/js/popper.min.js"></script>
     <script src="js/lib/bootstrap/js/bootstrap.min.js"></script>
     <script src="js/jquery.slimscroll.js"></script>

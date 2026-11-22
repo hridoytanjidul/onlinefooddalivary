@@ -1,28 +1,26 @@
+<?php
+include("auth.php");
+
+$orderId = (int) ($_GET['user_upd'] ?? 0);
+$stmt = $db->prepare("SELECT users.username, users.address, users_orders.* FROM users INNER JOIN users_orders ON users.u_id = users_orders.u_id WHERE users_orders.o_id = ?");
+$stmt->bind_param("i", $orderId);
+$stmt->execute();
+$rows = $stmt->get_result()->fetch_assoc();
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-if (empty($_SESSION["adm_id"])) {
-    header('location:index.php');
-    exit;
-}
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>View Order</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script language="javascript" type="text/javascript">
+<script type="text/javascript">
 var popUpWin=0;
 function popUpWindow(URLStr, left, top, width, height)
 {
@@ -30,7 +28,7 @@ function popUpWindow(URLStr, left, top, width, height)
 {
 if(!popUpWin.closed) popUpWin.close();
 }
-popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=no,copyhistory=yes,width='+1000+',height='+1000+',left='+left+', top='+top+',screenX='+left+',screenY='+top+'');
+popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=no,copyhistory=yes,width=' + (width || 1000) + ',height=' + (height || 1000) + ',left=' + (left || 0) + ',top=' + (top || 0));
 }
 
 </script>
@@ -147,100 +145,57 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
                                     <table id="myTable" class="table table-bordered table-striped table-modern">
                                        
                                         <tbody>
-                                           <?php
-											$sql="SELECT users.*, users_orders.* FROM users INNER JOIN users_orders ON users.u_id=users_orders.u_id where o_id='".$_GET['user_upd']."'";
-												$query=mysqli_query($db,$sql);
-												$rows=mysqli_fetch_array($query);
-												
-												
-																		
-												?>
-											
-											<tr>
-													<td><strong>Username:</strong></td>
-												    <td><center><?php echo $rows['username']; ?></center></td>
-													   <td><center>
-													   <a href="javascript:void(0);" onClick="popUpWindow('order_update.php?form_id=<?php echo htmlentities($rows['o_id']);?>');" title="Update order">
-															 <button type="button" class="btn btn-primary">Update Order Status</button></a>
-															 </center>
-											 </td>
-												  
-																																					
-											</tr>	
-											<tr>
-												<td><strong>Title:</strong></td>
-												    <td><center><?php echo $rows['title']; ?></center></td>
-													    <td><center>
-													   <a href="javascript:void(0);" onClick="popUpWindow('userprofile.php?newform_id=<?php echo htmlentities($rows['o_id']);?>');" title="Update order">
-														<button type="button" class="btn btn-primary">View User Detials</button></a>
-											
-													   </center></td>
-												   																								
-											</tr>	
-											<tr>
-													<td><strong>Quantity:</strong></td>
-												    <td><center><?php echo $rows['quantity']; ?></center></td>
-													  
-												   																							
-											</tr>
-											<tr>
-													<td><strong>Price:</strong></td>
-												    <td><center>$<?php echo $rows['price']; ?></center></td>
-													   
-												   																							
-											</tr>
-											<tr>
-													<td><strong>Address:</strong></td>
-												    <td><center><?php echo $rows['address']; ?></center></td>
-													  
-												   																							
-											</tr>
-											<tr>
-													<td><strong>Date:</strong></td>
-												     <td><center><?php echo $rows['date']; ?></center></td>
-													  
-												   																							
-											</tr>
-											<tr>
-													<td><strong>Status:</strong></td>
-													<?php 
-																			$status=$rows['status'];
-																			if($status=="" or $status=="NULL")
-																			{
-																			?>
-																			<td> <center><button type="button" class="btn btn-info"><span class="fa fa-bars"  aria-hidden="true" ></span> Dispatch</button></center></td>
-																		   <?php 
-																			  }
-																			   if($status=="in process")
-																			 { ?>
-																			<td>   <center><button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin"  aria-hidden="true" ></span>On a Way!</button></center></td> 
-																			<?php
-																				}
-																			if($status=="closed")
-																				{
-																			?>
-																			<td>  <center><button type="button" class="btn btn-primary" ><span  class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button></center></td> 
-																			<?php 
-																			} 
-																			?>
-																			<?php
-																			if($status=="rejected")
-																				{
-																			?>
-																			<td>  <center><button type="button" class="btn btn-danger"> <i class="fa fa-close"></i> Cancelled</button> </center></td> 
-																			<?php 
-																			} 
-																			?>
-													  
-												   																							
-											</tr>
-											
-																				
-																															
-																						
-									
-                                            
-                                           
+<?php if (!$rows) { ?>
+                                            <tr><td colspan="3"><center>Order not found.</center></td></tr>
+<?php } else {
+    $statusBadges = array(
+        'in process' => '<button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin" aria-hidden="true"></span> On The Way!</button>',
+        'closed'     => '<button type="button" class="btn btn-primary"><span class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button>',
+        'rejected'   => '<button type="button" class="btn btn-danger"><i class="fa fa-close"></i> Cancelled</button>',
+    );
+    $badge = $statusBadges[(string) $rows['status']] ?? '<button type="button" class="btn btn-info"><span class="fa fa-bars" aria-hidden="true"></span> Dispatch</button>';
+?>
+                                            <tr>
+                                                <td><strong>Username:</strong></td>
+                                                <td><center><?php echo e($rows['username']); ?></center></td>
+                                                <td><center>
+                                                    <a href="javascript:void(0);" onclick="popUpWindow('order_update.php?form_id=<?php echo (int) $rows['o_id']; ?>');" title="Update order">
+                                                        <button type="button" class="btn btn-primary">Update Order Status</button></a>
+                                                </center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Title:</strong></td>
+                                                <td><center><?php echo e($rows['title']); ?></center></td>
+                                                <td><center>
+                                                    <a href="javascript:void(0);" onclick="popUpWindow('userprofile.php?newform_id=<?php echo (int) $rows['o_id']; ?>');" title="View user details">
+                                                        <button type="button" class="btn btn-primary">View User Details</button></a>
+                                                </center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Quantity:</strong></td>
+                                                <td colspan="2"><center><?php echo e($rows['quantity']); ?></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Price:</strong></td>
+                                                <td colspan="2"><center>$<?php echo e($rows['price']); ?></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Total:</strong></td>
+                                                <td colspan="2"><center>$<?php echo number_format($rows['price'] * $rows['quantity'], 2); ?></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Address:</strong></td>
+                                                <td colspan="2"><center><?php echo e($rows['address']); ?></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Date:</strong></td>
+                                                <td colspan="2"><center><?php echo e($rows['date']); ?></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Status:</strong></td>
+                                                <td colspan="2"><center><?php echo $badge; ?></center></td>
+                                            </tr>
+<?php } ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -268,15 +223,6 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
     <script src="js/sidebarmenu.js"></script>
     <script src="js/lib/sticky-kit-master/dist/sticky-kit.min.js"></script>
     <script src="js/custom.min.js"></script>
-    <script src="js/lib/datatables/datatables.min.js"></script>
-    <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
-    <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
-    <script src="js/lib/datatables/cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
-    <script src="js/lib/datatables/cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
-    <script src="js/lib/datatables/cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"></script>
-    <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
-    <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.print.min.js"></script>
-    <script src="js/lib/datatables/datatables-init.js"></script>
 </body>
 
 </html>

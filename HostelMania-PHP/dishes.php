@@ -1,15 +1,33 @@
+<?php
+include("connection/connect.php");
+include_once 'product-action.php';
+
+$resId = (int) ($_GET['res_id'] ?? 0);
+
+// Redirect after changing the cart so refreshing the page does not add the item again.
+if (in_array($_GET['action'] ?? '', array('add', 'remove', 'empty'), true)) {
+    header('Location: dishes.php?res_id=' . $resId);
+    exit;
+}
+
+$stmt = $db->prepare("SELECT * FROM restaurant WHERE rs_id = ?");
+$stmt->bind_param("i", $resId);
+$stmt->execute();
+$rows = $stmt->get_result()->fetch_assoc();
+if (!$rows) {
+    header('Location: restaurants.php');
+    exit;
+}
+
+$stmt = $db->prepare("SELECT * FROM dishes WHERE rs_id = ?");
+$stmt->bind_param("i", $resId);
+$stmt->execute();
+$products = $stmt->get_result();
+
+$cartItems = $_SESSION['cart_item'] ?? array();
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("connection/connect.php"); 
-error_reporting(0);
-session_start();
-
-include_once 'product-action.php'; 
-
-?>
-
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -63,30 +81,26 @@ include_once 'product-action.php';
                     <ul class="row links">
                       
                         <li class="col-xs-12 col-sm-4 link-item"><span>1</span><a href="restaurants.php">Choose Restaurant</a></li>
-                        <li class="col-xs-12 col-sm-4 link-item active"><span>2</span><a href="dishes.php?res_id=<?php echo $_GET['res_id']; ?>">Pick Your favorite food</a></li>
+                        <li class="col-xs-12 col-sm-4 link-item active"><span>2</span><a href="dishes.php?res_id=<?php echo $resId; ?>">Pick Your favorite food</a></li>
                         <li class="col-xs-12 col-sm-4 link-item"><span>3</span><a href="#">Order and Pay</a></li>
                         
                     </ul>
                 </div>
             </div>
-			<?php $ress= mysqli_query($db,"select * from restaurant where rs_id='$_GET[res_id]'");
-									     $rows=mysqli_fetch_array($ress);
-										  
-										  ?>
             <section class="inner-page-hero bg-image" data-image-src="images/img/restrrr.png">
                 <div class="profile">
                     <div class="container">
                         <div class="row">
                             <div class="col-xs-12 col-sm-12  col-md-4 col-lg-4 profile-img">
                                 <div class="image-wrap">
-                                    <figure><?php echo '<img src="admin/Res_img/'.$rows['image'].'" alt="Restaurant logo">'; ?></figure>
+                                    <figure><img src="admin/Res_img/<?php echo e($rows['image']); ?>" alt="Restaurant logo"></figure>
                                 </div>
                             </div>
 							
                             <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 profile-desc">
                                 <div class="pull-left right-text white-txt">
-                                    <h6><a href="#"><?php echo $rows['title']; ?></a></h6>
-                                    <p><?php echo $rows['address']; ?></p>   
+                                    <h6><a href="#"><?php echo e($rows['title']); ?></a></h6>
+                                    <p><?php echo e($rows['address']); ?></p>   
                                 </div>
                             </div>
 							
@@ -98,7 +112,7 @@ include_once 'product-action.php';
             <div class="breadcrumb">
                 <div class="container">
                    <div class="menu-page-header">
-                        <h2><?php echo $rows['title']; ?> Menu</h2>
+                        <h2><?php echo e($rows['title']); ?> Menu</h2>
                         <p>Fresh, fast, and ready when you are.</p>
                    </div>
                 </div>
@@ -124,22 +138,22 @@ include_once 'product-action.php';
 
 $item_total = 0;
 
-foreach ($_SESSION["cart_item"] as $item)  
+foreach ($cartItems as $item)
 {
 ?>									
 									
                                         <div class="title-row">
-										<?php echo $item["title"]; ?><a href="dishes.php?res_id=<?php echo $_GET['res_id']; ?>&action=remove&id=<?php echo $item["d_id"]; ?>" >
+										<?php echo e($item["title"]); ?><a href="dishes.php?res_id=<?php echo $resId; ?>&amp;action=remove&amp;id=<?php echo (int) $item["d_id"]; ?>" title="Remove">
 										<i class="fa fa-trash pull-right"></i></a>
 										</div>
 										
                                         <div class="form-group row no-gutter">
                                             <div class="col-xs-8">
-                                                 <input type="text" class="form-control b-r-0" value=<?php echo "TK".$item["price"]; ?> readonly id="exampleSelect1">
+                                                 <input type="text" class="form-control b-r-0" value="<?php echo e('$' . $item["price"]); ?>" readonly>
                                                    
                                             </div>
                                             <div class="col-xs-4">
-                                               <input class="form-control" type="text" readonly value='<?php echo $item["quantity"]; ?>' id="example-number-input"> </div>
+                                               <input class="form-control" type="text" readonly value="<?php echo (int) $item["quantity"]; ?>"> </div>
                                         
 									  </div>
 									  
@@ -158,20 +172,20 @@ $item_total += ($item["price"]*$item["quantity"]);
                                 <div class="widget-body">
                                     <div class="price-wrap text-xs-center">
                                         <p>TOTAL</p>
-                                        <h3 class="value"><strong><?php echo "$".$item_total; ?></strong></h3>
+                                        <h3 class="value"><strong><?php echo '$' . number_format($item_total, 2); ?></strong></h3>
                                         <p>Free Delivery!</p>
                                         <?php
                                         if($item_total==0){
                                         ?>
 
                                         
-                                        <a href="checkout.php?res_id=<?php echo $_GET['res_id'];?>&action=check"  class="btn btn-danger btn-lg disabled">Checkout</a>
+                                        <a href="checkout.php" class="btn btn-danger btn-lg disabled">Checkout</a>
 
                                         <?php
                                         }
                                         else{   
                                         ?>
-                                        <a href="checkout.php?res_id=<?php echo $_GET['res_id'];?>&action=check"  class="btn btn-success btn-lg active">Checkout</a>
+                                        <a href="checkout.php" class="btn btn-success btn-lg active">Checkout</a>
                                         <?php   
                                         }
                                         ?>
@@ -199,12 +213,10 @@ $item_total += ($item["price"]*$item["quantity"]);
                                 <div class="clearfix"></div>
                             </div>
                             <div class="collapse in" id="popular2">
-						<?php  
-									$stmt = $db->prepare("select * from dishes where rs_id='$_GET[res_id]'");
-									$stmt->execute();
-									$products = $stmt->get_result();
-									if (!empty($products)) 
-									{
+						<?php
+									if ($products->num_rows === 0) {
+										echo '<p class="p-20">No dishes available yet.</p>';
+									} else {
 									foreach($products as $product)
 										{
 						
@@ -214,21 +226,21 @@ $item_total += ($item["price"]*$item["quantity"]);
                                 <div class="food-item">
                                     <div class="row">
                                         <div class="col-xs-12 col-sm-12 col-lg-8">
-										<form method="post" action='dishes.php?res_id=<?php echo $_GET['res_id'];?>&action=add&id=<?php echo $product['d_id']; ?>'>
+										<form method="post" action="dishes.php?res_id=<?php echo $resId; ?>&amp;action=add&amp;id=<?php echo (int) $product['d_id']; ?>">
                                             <div class="rest-logo pull-left">
-                                                <a class="restaurant-logo pull-left" href="#"><?php echo '<img src="admin/Res_img/dishes/'.$product['img'].'" alt="Food logo">'; ?></a>
+                                                <a class="restaurant-logo pull-left" href="#"><img src="admin/Res_img/dishes/<?php echo e($product['img']); ?>" alt="Food logo"></a>
                                             </div>
                                 
                                             <div class="rest-descr">
-                                                <h6><a href="#"><?php echo $product['title']; ?></a></h6>
-                                                <p> <?php echo $product['slogan']; ?></p>
+                                                <h6><a href="#"><?php echo e($product['title']); ?></a></h6>
+                                                <p> <?php echo e($product['slogan']); ?></p>
                                             </div>
                            
                                         </div>
                                
                                         <div class="col-xs-12 col-sm-12 col-lg-3 pull-right item-cart-info"> 
-										<span class="price pull-left" >$<?php echo $product['price']; ?></span>
-										  <input class="b-r-0" type="text" name="quantity"  style="margin-left:30px;" value="1" size="2" />
+										<span class="price pull-left" >$<?php echo e($product['price']); ?></span>
+										  <input class="b-r-0" type="number" name="quantity" min="1" max="99" style="margin-left:30px;width:60px;" value="1" />
 										  <input type="submit" class="btn theme-btn" style="margin-left:40px;" value="Add To Cart" />
 										</div>
 										</form>
@@ -285,7 +297,7 @@ $item_total += ($item["price"]*$item["quantity"]);
                                 <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University</p>
-                                    <h5>Phone: 75696969855</a></h5> </div>
+                                    <h5>Phone: 75696969855</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>
@@ -298,144 +310,7 @@ $item_total += ($item["price"]*$item["quantity"]);
             </footer>
       
         </div>
-  
-    </div>
 
- 
-    <div class="modal fade" id="order-modal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
-                <div class="modal-body cart-addon">
-                    <div class="food-item white">
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-6 col-lg-6">
-                                <div class="item-img pull-left">
-                                    <a class="restaurant-logo pull-left" href="#"><img src="http://placehold.it/70x70" alt="Food logo"></a>
-                                </div>
-              
-                                <div class="rest-descr">
-                                    <h6><a href="#">Sandwich de Alegranza Grande Menü (28 - 30 cm.)</a></h6> </div>
-               
-                            </div>
-           
-                            <div class="col-xs-6 col-sm-2 col-lg-2 text-xs-center"> <span class="price pull-left">$ 2.99</span></div>
-                            <div class="col-xs-6 col-sm-4 col-lg-4">
-                                <div class="row no-gutter">
-                                    <div class="col-xs-7">
-                                        <select class="form-control b-r-0" id="exampleSelect2">
-                                            <option>Size SM</option>
-                                            <option>Size LG</option>
-                                            <option>Size XL</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-xs-5">
-                                        <input class="form-control" type="number" value="0" id="quant-input-2"> </div>
-                                </div>
-                            </div>
-                        </div>
-               
-                    </div>
-              
-                    <div class="food-item">
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-6 col-lg-6">
-                                <div class="item-img pull-left">
-                                    <a class="restaurant-logo pull-left" href="#"><img src="http://placehold.it/70x70" alt="Food logo"></a>
-                                </div>
-                    
-                                <div class="rest-descr">
-                                    <h6><a href="#">Sandwich de Alegranza Grande Menü (28 - 30 cm.)</a></h6> </div>
-                
-                            </div>
-               
-                            <div class="col-xs-6 col-sm-2 col-lg-2 text-xs-center"> <span class="price pull-left">$ 2.49</span></div>
-                            <div class="col-xs-6 col-sm-4 col-lg-4">
-                                <div class="row no-gutter">
-                                    <div class="col-xs-7">
-                                        <select class="form-control b-r-0" id="exampleSelect3">
-                                            <option>Size SM</option>
-                                            <option>Size LG</option>
-                                            <option>Size XL</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-xs-5">
-                                        <input class="form-control" type="number" value="0" id="quant-input-3"> </div>
-                                </div>
-                            </div>
-                        </div>
-            
-                    </div>
-            
-                    <div class="food-item">
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-6 col-lg-6">
-                                <div class="item-img pull-left">
-                                    <a class="restaurant-logo pull-left" href="#"><img src="http://placehold.it/70x70" alt="Food logo"></a>
-                                </div>
-                       
-                                <div class="rest-descr">
-                                    <h6><a href="#">Sandwich de Alegranza Grande Menü (28 - 30 cm.)</a></h6> </div>
-                 
-                            </div>
-                
-                            <div class="col-xs-6 col-sm-2 col-lg-2 text-xs-center"> <span class="price pull-left">$ 1.99</span></div>
-                            <div class="col-xs-6 col-sm-4 col-lg-4">
-                                <div class="row no-gutter">
-                                    <div class="col-xs-7">
-                                        <select class="form-control b-r-0" id="exampleSelect5">
-                                            <option>Size SM</option>
-                                            <option>Size LG</option>
-                                            <option>Size XL</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-xs-5">
-                                        <input class="form-control" type="number" value="0" id="quant-input-4"> </div>
-                                </div>
-                            </div>
-                        </div>
-                 
-                    </div>
-               
-                    <div class="food-item">
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-6 col-lg-6">
-                                <div class="item-img pull-left">
-                                    <a class="restaurant-logo pull-left" href="#"><img src="http://placehold.it/70x70" alt="Food logo"></a>
-                                </div>
-                 
-                                <div class="rest-descr">
-                                    <h6><a href="#">Sandwich de Alegranza Grande Menü (28 - 30 cm.)</a></h6> </div>
-                      
-                            </div>
-                       
-                            <div class="col-xs-6 col-sm-2 col-lg-2 text-xs-center"> <span class="price pull-left">$ 3.15</span></div>
-                            <div class="col-xs-6 col-sm-4 col-lg-4">
-                                <div class="row no-gutter">
-                                    <div class="col-xs-7">
-                                        <select class="form-control b-r-0" id="exampleSelect6">
-                                            <option>Size SM</option>
-                                            <option>Size LG</option>
-                                            <option>Size XL</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-xs-5">
-                                        <input class="form-control" type="number" value="0" id="quant-input-5"> </div>
-                                </div>
-                            </div>
-                        </div>
-           
-                    </div>
-             
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn theme-btn">Add To Cart</button>
-                </div>
-            </div>
-        </div>
-    </div>
- 
     <script src="js/jquery.min.js"></script>
     <script src="js/tether.min.js"></script>
     <script src="js/bootstrap.min.js"></script>

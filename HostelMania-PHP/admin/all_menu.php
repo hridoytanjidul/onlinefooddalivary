@@ -1,18 +1,15 @@
+<?php
+include("auth.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">    
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>All Menu</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -155,44 +152,22 @@ session_start();
 										
                                            
                                                	<?php
-												$sql="SELECT * FROM dishes order by d_id desc";
-												$query=mysqli_query($db,$sql);
-												
-													if(!mysqli_num_rows($query) > 0 )
-														{
-															echo '<td colspan="11"><center>No Menu</center></td>';
-														}
-													else
-														{				
-																	while($rows=mysqli_fetch_array($query))
-																		{
-																				$mql="select * from restaurant where rs_id='".$rows['rs_id']."'";
-																				$newquery=mysqli_query($db,$mql);
-																				$fetch=mysqli_fetch_array($newquery);
-																				
-																				
-																					echo '<tr><td>'.$fetch['title'].'</td>
-																					
-																								<td>'.$rows['title'].'</td>
-																								<td>'.$rows['slogan'].'</td>
-																								<td>$'.$rows['price'].'</td>
-																								
-																								
-																								<td><div class="col-md-3 col-lg-8 m-b-10">
-																								<center><img src="Res_img/dishes/'.$rows['img'].'" class="img-responsive  radius" style="max-height:100px;max-width:150px;" /></center>
-																								</div></td>
-																								
-																							
-																									<td><a href="delete_menu.php?menu_del='.$rows['d_id'].'" class="btn btn-danger table-action-btn" title="Delete"><i class="fa fa-trash-o"></i></a> 
-																									<a href="update_menu.php?menu_upd='.$rows['d_id'].'" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
-																									</td></tr>';																					 
-																						
-																						
-																		}	
-														}
-												
-											
-											?>
+												$sql = "SELECT d.*, r.title AS restaurant_title FROM dishes d LEFT JOIN restaurant r ON r.rs_id = d.rs_id ORDER BY d.d_id DESC";
+												$query = mysqli_query($db, $sql);
+												// When there are no rows DataTables shows its own "No data" message.
+												while ($rows = mysqli_fetch_array($query)) {
+													echo '<tr><td>' . e($rows['restaurant_title']) . '</td>
+														<td>' . e($rows['title']) . '</td>
+														<td>' . e($rows['slogan']) . '</td>
+														<td>$' . e($rows['price']) . '</td>
+														<td><div class="col-md-3 col-lg-8 m-b-10">
+															<center><img src="Res_img/dishes/' . e($rows['img']) . '" class="img-responsive radius" style="max-height:100px;max-width:150px;" alt="" /></center>
+														</div></td>
+														<td>' . delete_button('delete_menu.php', 'menu_del', $rows['d_id'], 'Delete this dish?') . '
+															<a href="update_menu.php?menu_upd=' . (int) $rows['d_id'] . '" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
+														</td></tr>';
+												}
+												?>
                                             
                                            
                                  

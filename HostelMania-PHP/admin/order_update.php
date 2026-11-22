@@ -1,24 +1,39 @@
 <?php
+include("auth.php");
 
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-if (empty($_SESSION['adm_id'])) {
-    header('location:index.php');
-    exit;
-}
+$form_id = (int) ($_GET['form_id'] ?? 0);
+$allowedStatuses = array('in process', 'closed', 'rejected');
+$notice = '';
+$updated = false;
 
-if (isset($_POST['update'])) {
-    $form_id = $_GET['form_id'];
-    $status = $_POST['status'];
-    $remark = $_POST['remark'];
-    $query = mysqli_query($db, "INSERT INTO remark(frm_id, status, remark) VALUES('$form_id', '$status', '$remark')");
-    $sql = mysqli_query($db, "UPDATE users_orders SET status = '$status' WHERE o_id = '$form_id'");
+if (isset($_POST['update']) && !csrf_valid()) {
+    $notice = CSRF_ERROR;
+} elseif (isset($_POST['update'])) {
+    $status = $_POST['status'] ?? '';
+    $remark = trim($_POST['remark'] ?? '');
 
-    echo "<script>alert('Form Details Updated Successfully');</script>";
+    if ($form_id <= 0) {
+        $notice = 'Invalid order.';
+    } elseif (!in_array($status, $allowedStatuses, true) || $remark === '') {
+        $notice = 'Please choose a status and enter a message.';
+    } else {
+        // Prepared statements: a remark like "Rider's on the way" used to break the query.
+        $stmt = $db->prepare("INSERT INTO remark(frm_id, status, remark) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $form_id, $status, $remark);
+        $stmt->execute();
+
+        $stmt = $db->prepare("UPDATE users_orders SET status = ? WHERE o_id = ?");
+        $stmt->bind_param("si", $status, $form_id);
+        $stmt->execute();
+
+        $updated = true;
+    }
 }
 ?>
-<script language="javascript" type="text/javascript">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script type="text/javascript">
 function f2()
 {
 window.close();
@@ -28,20 +43,17 @@ function f3()
 window.print();
 }
 </script>
-
-<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>Order Update</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    
+
 <style type="text/css" rel="stylesheet">
 body {
   background: linear-gradient(135deg, #f8f9ff 0%, #eef3ff 100%);
@@ -95,13 +107,23 @@ textarea {
 </head>
 
 <body>
+<?php if ($updated) { ?>
+<script type="text/javascript">
+alert('Order status updated successfully');
+// refresh the order page that opened this window so it shows the new status
+if (window.opener && !window.opener.closed) { window.opener.location.reload(); }
+</script>
+<?php } elseif ($notice !== '') { ?>
+<script type="text/javascript">alert(<?php echo json_encode($notice); ?>);</script>
+<?php } ?>
 
 <div class="order-modal-wrap">
- <form name="updateticket" id="updatecomplaint" method="post"> 
+ <form name="updateticket" id="updatecomplaint" method="post">
+ <?php echo csrf_field(); ?> 
 <table border="0" cellspacing="0" cellpadding="0">
      <tr>
       <td><b>Form Number</b></td>
-      <td><?php echo htmlentities($_GET['form_id']); ?></td>
+      <td><?php echo $form_id; ?></td>
     </tr>
 	<tr>
       <td>&nbsp;</td>
@@ -126,7 +148,7 @@ textarea {
     <tr>
       <td><b>Action</b></td>
       <td><input type="submit" name="update" class="btn btn-primary" value="Submit">
-      <input name="Submit2" type="submit" class="btn btn-danger" value="Close this window" onClick="return f2();" style="cursor: pointer;" /></td>
+      <input name="Submit2" type="button" class="btn btn-danger" value="Close this window" onclick="f2();" style="cursor: pointer;" /></td>
     </tr>
 </table>
  </form>

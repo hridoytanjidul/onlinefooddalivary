@@ -1,118 +1,56 @@
+<?php
+include("auth.php");
+
+$error = '';
+$success = '';
+$form = array('res_name' => '', 'email' => '', 'phone' => '', 'url' => '', 'o_hr' => '', 'c_hr' => '', 'o_days' => '', 'c_name' => 0, 'address' => '');
+
+if (isset($_POST['submit']) && !csrf_valid()) {
+    $error = admin_alert('danger', '<strong>' . CSRF_ERROR . '</strong>');
+} elseif (isset($_POST['submit'])) {
+    $form = array(
+        'res_name' => trim($_POST['res_name'] ?? ''),
+        'email'    => trim($_POST['email'] ?? ''),
+        'phone'    => trim($_POST['phone'] ?? ''),
+        'url'      => trim($_POST['url'] ?? ''),
+        'o_hr'     => trim($_POST['o_hr'] ?? ''),
+        'c_hr'     => trim($_POST['c_hr'] ?? ''),
+        'o_days'   => trim($_POST['o_days'] ?? ''),
+        'c_name'   => (int) ($_POST['c_name'] ?? 0),
+        'address'  => trim($_POST['address'] ?? ''),
+    );
+
+    if ($form['c_name'] <= 0 || $form['res_name'] === '' || $form['email'] === '' || $form['phone'] === '' || $form['url'] === ''
+        || $form['o_hr'] === '' || $form['c_hr'] === '' || $form['o_days'] === '' || $form['address'] === '') {
+        $error = admin_alert('danger', '<strong>All fields Must be Fillup!</strong>');
+    } elseif (!filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+        $error = admin_alert('danger', '<strong>Invalid email address!</strong>');
+    } else {
+        $uploadError = null;
+        $image = save_uploaded_image($_FILES['file'] ?? null, __DIR__ . '/Res_img', $uploadError);
+
+        if ($image === null) {
+            $error = admin_alert('danger', '<strong>' . e($uploadError) . '</strong>');
+        } else {
+            $stmt = $db->prepare("INSERT INTO restaurant(c_id, title, email, phone, url, o_hr, c_hr, o_days, address, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isssssssss", $form['c_name'], $form['res_name'], $form['email'], $form['phone'], $form['url'], $form['o_hr'], $form['c_hr'], $form['o_days'], $form['address'], $image);
+            $stmt->execute();
+
+            $success = admin_alert('success', 'New Restaurant Added Successfully.');
+            $form = array('res_name' => '', 'email' => '', 'phone' => '', 'url' => '', 'o_hr' => '', 'c_hr' => '', 'o_days' => '', 'c_name' => 0, 'address' => '');
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-
-
-
-if(isset($_POST['submit']))          
-{
-	
-			
-		
-			
-		  
-		
-		
-		if(empty($_POST['c_name'])||empty($_POST['res_name'])||$_POST['email']==''||$_POST['phone']==''||$_POST['url']==''||$_POST['o_hr']==''||$_POST['c_hr']==''||$_POST['o_days']==''||$_POST['address']=='')
-		{	
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>All fields Must be Fillup!</strong>
-															</div>';
-									
-		
-								
-		}
-	else
-		{
-		
-				$fname = $_FILES['file']['name'];
-								$temp = $_FILES['file']['tmp_name'];
-								$fsize = $_FILES['file']['size'];
-								$extension = explode('.',$fname);
-								$extension = strtolower(end($extension));  
-								$fnew = uniqid().'.'.$extension;
-   
-								$store = "Res_img/".basename($fnew);                      
-	
-					if($extension == 'jpg'||$extension == 'png'||$extension == 'gif' )
-					{        
-									if($fsize>=1000000)
-										{
-		
-		
-												$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Max Image Size is 1024kb!</strong> Try different Image.
-															</div>';
-	   
-										}
-		
-									else
-										{
-												
-												
-												$res_name = $_POST['res_name'];
-												$stmt = $db->prepare("INSERT INTO restaurant(c_id, title, email, phone, url, o_hr, c_hr, o_days, address, image) VALUE(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-												$stmt->bind_param("isssssssss", $_POST['c_name'], $res_name, $_POST['email'], $_POST['phone'], $_POST['url'], $_POST['o_hr'], $_POST['c_hr'], $_POST['o_days'], $_POST['address'], $fnew);
-												$stmt->execute();
-												move_uploaded_file($temp, $store);
-			  
-													$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																 New Restaurant Added Successfully.
-															</div>';
-                
-	
-										}
-					}
-					elseif($extension == '')
-					{
-						$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>select image</strong>
-															</div>';
-					}
-					else{
-					
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>invalid extension!</strong>png, jpg, Gif are accepted.
-															</div>';
-						
-	   
-						}               
-	   
-	   
-	   }
-
-
-
-	
-	
-	
-
-}
-
-
-
-
-
-
-
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">    
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>Add Restaurant</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -236,6 +174,7 @@ if(isset($_POST['submit']))
                             </div>
                             <div class="card-body">
                                 <form action='' method='post'  enctype="multipart/form-data">
+                                    <?php echo csrf_field(); ?>
                                     <div class="form-body">
                                        
                                         <hr>
@@ -243,14 +182,14 @@ if(isset($_POST['submit']))
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Restaurant Name</label>
-                                                    <input type="text" name="res_name" class="form-control">
+                                                    <input type="text" name="res_name" class="form-control" value="<?php echo e($form['res_name']); ?>">
                                                    </div>
                                             </div>
                                   
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Bussiness E-mail</label>
-                                                    <input type="text" name="email" class="form-control form-control-danger" >
+                                                    <input type="text" name="email" class="form-control form-control-danger" value="<?php echo e($form['email']); ?>">
                                                     </div>
                                             </div>
                                      
@@ -260,14 +199,14 @@ if(isset($_POST['submit']))
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Phone </label>
-                                                    <input type="text" name="phone" class="form-control" >
+                                                    <input type="text" name="phone" class="form-control" value="<?php echo e($form['phone']); ?>">
                                                    </div>
                                             </div>
                                       
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Website URL</label>
-                                                    <input type="text" name="url" class="form-control form-control-danger" >
+                                                    <input type="text" name="url" class="form-control form-control-danger" value="<?php echo e($form['url']); ?>">
                                                     </div>
                                             </div>
                                        
@@ -278,14 +217,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Open Hours</label>
                                                     <select name="o_hr" class="form-control custom-select" data-placeholder="Choose a Category" >
-                                                     <option>--Select your Hours--</option>
-                                                        <option value="6am">6am</option>
-                                                        <option value="7am">7am</option> 
-														<option value="8am">8am</option>
-														<option value="9am">9am</option>
-														<option value="10am">10am</option>
-														<option value="11am">11am</option>
-                                                        <option value="12pm">12pm</option>
+                                                        <option value="">--Select your Hours--</option>
+                                                        <?php echo select_options($OPEN_HOURS, $form['o_hr']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -294,20 +227,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Close Hours</label>
                                                     <select name="c_hr" class="form-control custom-select" data-placeholder="Choose a Category" >
-                                                     <option>--Select your Hours--</option>
-                                                        <option value="3pm">3pm</option>
-                                                        <option value="4pm">4pm</option> 
-														<option value="5pm">5pm</option>
-														<option value="6pm">6pm</option>
-														<option value="7pm">7pm</option>
-														<option value="8pm">8pm</option>
-                                                        <option value="9pm">9pm</option>
-                                                        <option value="10pm">10pm</option>
-                                                        <option value="11pm">11pm</option>
-                                                        <option value="12am">12am</option>
-                                                        <option value="1am">1am</option>
-                                                        <option value="2am">2am</option>
-                                                        <option value="3am">3am</option>
+                                                        <option value="">--Select your Hours--</option>
+                                                        <?php echo select_options($CLOSE_HOURS, $form['c_hr']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -316,13 +237,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Open Days</label>
                                                     <select name="o_days" class="form-control custom-select" data-placeholder="Choose a Category" tabindex="1">
-                                                        <option>--Select your Days--</option>
-                                                        <option value="Mon-Tue">Mon-Tue</option>
-                                                        <option value="Mon-Wed">Mon-Wed</option> 
-														<option value="Mon-Thu">Mon-Thu</option>
-														<option value="Mon-Fri">Mon-Fri</option>
-														<option value="Mon-Sat">Mon-Sat</option>
-														<option value="24hr-x7">24hr-x7</option>
+                                                        <option value="">--Select your Days--</option>
+                                                        <?php echo select_options($OPEN_DAYS, $form['o_days']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -331,7 +247,7 @@ if(isset($_POST['submit']))
 											<div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Image</label>
-                                                    <input type="file" name="file"  id="lastName" class="form-control form-control-danger" placeholder="12n">
+                                                    <input type="file" name="file" id="lastName" class="form-control form-control-danger" accept="image/png,image/jpeg,image/gif">
                                                     </div>
                                             </div>
                                  
@@ -342,16 +258,15 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Select Category</label>
 													<select name="c_name" class="form-control custom-select" data-placeholder="Choose a Category" tabindex="1">
-                                                        <option>--Select Category--</option>
-                                                 <?php $ssql ="select * from res_category";
-													$res=mysqli_query($db, $ssql); 
-													while($row=mysqli_fetch_array($res))  
-													{
-                                                       echo' <option value="'.$row['c_id'].'">'.$row['c_name'].'</option>';;
-													}  
-                                                 
-													?> 
-													 </select>
+                                                        <option value="">--Select Category--</option>
+                                                        <?php
+                                                    $res = mysqli_query($db, "SELECT c_id, c_name FROM res_category ORDER BY c_name");
+                                                    while ($rows = mysqli_fetch_array($res)) {
+                                                        $selected = ((int) $form['c_name'] === (int) $rows['c_id']) ? ' selected' : '';
+                                                        echo '<option value="' . (int) $rows['c_id'] . '"' . $selected . '>' . e($rows['c_name']) . '</option>';
+                                                    }
+                                                 ?>
+                                                    </select>
                                                 </div>
                                             </div>
 											
@@ -365,7 +280,7 @@ if(isset($_POST['submit']))
                                             <div class="col-md-12 ">
                                                 <div class="form-group">
                                                     
-                                                    <textarea name="address" type="text" style="height:100px;" class="form-control"></textarea>
+                                                    <textarea name="address" style="height:100px;" class="form-control"><?php echo e($form['address']); ?></textarea>
                                                 </div>
                                             </div>
                                         </div>

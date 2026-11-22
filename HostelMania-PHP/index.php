@@ -1,11 +1,8 @@
+<?php
+include("connection/connect.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("connection/connect.php");  
-error_reporting(0);  
-session_start(); 
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -108,17 +105,17 @@ session_start();
                 </div>
                 <div class="row">
 						<?php 					
-						$query_res= mysqli_query($db,"select * from dishes LIMIT 6"); 
+						$query_res= mysqli_query($db,"SELECT d.* FROM dishes d INNER JOIN restaurant r ON r.rs_id = d.rs_id LIMIT 6");
                                 while($r=mysqli_fetch_array($query_res))
                                 {
                                         
                                     echo '  <div class="col-xs-12 col-sm-6 col-md-4 food-item">
                                             <div class="food-item-wrap">
-                                                <div class="figure-wrap bg-image" data-image-src="admin/Res_img/dishes/'.$r['img'].'"></div>
+                                                <div class="figure-wrap bg-image" data-image-src="admin/Res_img/dishes/'.e($r['img']).'"></div>
                                                 <div class="content">
-                                                    <h5><a href="dishes.php?res_id='.$r['rs_id'].'">'.$r['title'].'</a></h5>
-                                                    <div class="product-name">'.$r['slogan'].'</div>
-                                                    <div class="price-btn-block"> <span class="price">$'.$r['price'].'</span> <a href="dishes.php?res_id='.$r['rs_id'].'" class="btn theme-btn-dash pull-right">Order Now</a> </div>
+                                                    <h5><a href="dishes.php?res_id='.(int)$r['rs_id'].'">'.e($r['title']).'</a></h5>
+                                                    <div class="product-name">'.e($r['slogan']).'</div>
+                                                    <div class="price-btn-block"> <span class="price">$'.e($r['price']).'</span> <a href="dishes.php?res_id='.(int)$r['rs_id'].'" class="btn theme-btn-dash pull-right">Order Now</a> </div>
                                                 </div>
                                                 
                                             </div>
@@ -145,7 +142,7 @@ session_start();
                                         </svg>
                                     </div>
                                     <h3>Choose a restaurant</h3>
-                                    <p>We"ve got your covered with menus from a variety of delivery restaurants online.</p>
+                                    <p>We've got your covered with menus from a variety of delivery restaurants online.</p>
                                 </div>
                             </div>
                         </div>
@@ -158,7 +155,7 @@ session_start();
                                     </svg>
                                 </div>
                                 <h3>Choose a dish</h3>
-                                <p>We"ve got your covered with a variety of delivery restaurants online.</p>
+                                <p>We've got your covered with a variety of delivery restaurants online.</p>
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-4 how-it-works-steps white-txt col3">
@@ -196,7 +193,8 @@ session_start();
 									$res= mysqli_query($db,"select * from res_category");
 									      while($row=mysqli_fetch_array($res))
 										  {
-											echo '<li><a href="#" data-filter=".'.$row['c_name'].'"> '.$row['c_name'].'</a> </li>';
+											// filter on the id: category names with spaces are not valid CSS class selectors
+											echo '<li><a href="#" data-filter=".cat-'.(int)$row['c_id'].'"> '.e($row['c_name']).'</a> </li>';
 										  }
 									?>
                                    
@@ -212,22 +210,19 @@ session_start();
                         
 						
 						<?php  
-						$ress= mysqli_query($db,"select * from restaurant");  
+						$ress= mysqli_query($db,"SELECT * FROM restaurant");
 									      while($rows=mysqli_fetch_array($ress))
 										  {
 													
-													$query= mysqli_query($db,"select * from res_category where c_id='".$rows['c_id']."' ");
-													 $rowss=mysqli_fetch_array($query);
-						
-													 echo ' <div class="col-xs-12 col-sm-12 col-md-6 single-restaurant all '.$rowss['c_name'].'">
+													 echo ' <div class="col-xs-12 col-sm-12 col-md-6 single-restaurant all cat-'.(int)$rows['c_id'].'">
 														<div class="restaurant-wrap">
 															<div class="row">
 																<div class="col-xs-12 col-sm-3 col-md-12 col-lg-3 text-xs-center">
-																	<a class="restaurant-logo" href="dishes.php?res_id='.$rows['rs_id'].'" > <img src="admin/Res_img/'.$rows['image'].'" alt="Restaurant logo"> </a>
+																	<a class="restaurant-logo" href="dishes.php?res_id='.(int)$rows['rs_id'].'" > <img src="admin/Res_img/'.e($rows['image']).'" alt="Restaurant logo"> </a>
 																</div>
 													
 																<div class="col-xs-12 col-sm-9 col-md-12 col-lg-9">
-																	<h5><a href="dishes.php?res_id='.$rows['rs_id'].'" >'.$rows['title'].'</a></h5> <span>'.$rows['address'].'</span>
+																	<h5><a href="dishes.php?res_id='.(int)$rows['rs_id'].'" >'.e($rows['title']).'</a></h5> <span>'.e($rows['address']).'</span>
 																</div>
 													
 															</div>
@@ -280,7 +275,7 @@ session_start();
                         <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>

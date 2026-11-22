@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
 include("connection/connect.php");
-error_reporting(0);
-session_start();
 
-if(empty($_SESSION['user_id']))  
-{
-	header('location:login.php');
+if (empty($_SESSION['user_id'])) {
+	header('Location: login.php');
+	exit;
 }
-else
-{
 ?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -25,7 +21,7 @@ else
     <link href="css/animsition.min.css" rel="stylesheet">
     <link href="css/animate.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-<style type="text/css" rel="stylesheet">
+<style type="text/css">
 
 
 .indent-small {
@@ -89,7 +85,7 @@ td, th {
 	text-align: left; 
 	font-size: 14px;
 	
-	} */ */
+	} */
 
 
 @media 
@@ -228,68 +224,44 @@ only screen and (max-width: 760px),
 						  <tbody>
 						  
 						  
-							<?php 
-				
-						$query_res= mysqli_query($db,"select * from users_orders where u_id='".$_SESSION['user_id']."'");
-												if(!mysqli_num_rows($query_res) > 0 )
-														{
-															echo '<td colspan="6"><center>You have No orders Placed yet. </center></td>';
-														}
-													else
-														{			      
-										  
-										  while($row=mysqli_fetch_array($query_res))
-										  {
-						
-							?>
-												<tr>	
-														 <td data-column="Item"> <?php echo $row['title']; ?></td>
-														  <td data-column="Quantity"> <?php echo $row['quantity']; ?></td>
-														  <td data-column="price">$<?php echo $row['price']; ?></td>
-														   <td data-column="status"> 
-														   <?php 
-																			$status=$row['status'];
-																			if($status=="" or $status=="NULL")
-																			{
-																			?>
-																			<button type="button" class="btn btn-info"><span class="fa fa-bars"  aria-hidden="true" ></span> Dispatch</button>
-																		   <?php 
-																			  }
-																			   if($status=="in process")
-																			 { ?>
-																				<button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin"  aria-hidden="true" ></span> On The Way!</button>
-																			<?php
-																				}
-																			if($status=="closed")
-																				{
-																			?>
-																			 <button type="button" class="btn btn-success" ><span  class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button> 
-																			<?php 
-																			} 
-																			?>
-																			<?php
-																			if($status=="rejected")
-																				{
-																			?>
-																			 <button type="button" class="btn btn-danger"> <i class="fa fa-close"></i> Cancelled</button>
-																			<?php 
-																			} 
-																			?>
-														   
-														   
-														   
-														   
-														   
-														   
-														   </td>
-														  <td data-column="Date"> <?php echo $row['date']; ?></td>
-														   <td data-column="Action"> <a href="delete_orders.php?order_del=<?php echo $row['o_id'];?>" onclick="return confirm('Are you sure you want to cancel your order?');" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
+							<?php
+						$userId = (int) $_SESSION['user_id'];
+						$stmt = $db->prepare("SELECT * FROM users_orders WHERE u_id = ? ORDER BY o_id DESC");
+						$stmt->bind_param("i", $userId);
+						$stmt->execute();
+						$query_res = $stmt->get_result();
+
+						$statusBadges = array(
+							'in process' => '<button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin" aria-hidden="true"></span> On The Way!</button>',
+							'closed'     => '<button type="button" class="btn btn-success"><span class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button>',
+							'rejected'   => '<button type="button" class="btn btn-danger"><i class="fa fa-close"></i> Cancelled</button>',
+						);
+						$dispatchBadge = '<button type="button" class="btn btn-info"><span class="fa fa-bars" aria-hidden="true"></span> Dispatch</button>';
+
+						if ($query_res->num_rows == 0) {
+							echo '<tr><td colspan="6"><center>You have No orders Placed yet. </center></td></tr>';
+						} else {
+							while ($row = $query_res->fetch_assoc()) {
+						?>
+												<tr>
+														 <td data-column="Item"> <?php echo e($row['title']); ?></td>
+														  <td data-column="Quantity"> <?php echo (int) $row['quantity']; ?></td>
+														  <td data-column="price">$<?php echo e($row['price']); ?></td>
+														   <td data-column="status"><?php echo $statusBadges[(string) $row['status']] ?? $dispatchBadge; ?></td>
+														  <td data-column="Date"> <?php echo e($row['date']); ?></td>
+														   <td data-column="Action">
+														   <?php if ((string) $row['status'] === '' || $row['status'] === 'NULL') { ?>
+															<form method="post" action="delete_orders.php" style="display:inline;margin:0;" onsubmit="return confirm('Are you sure you want to cancel your order?');">
+																<?php echo csrf_field(); ?>
+																<input type="hidden" name="order_del" value="<?php echo (int) $row['o_id']; ?>">
+																<button type="submit" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10" title="Cancel order"><i class="fa fa-trash-o" style="font-size:16px"></i></button>
+															</form>
+														   <?php } else { ?>
+															&mdash;
+														   <?php } ?>
 															</td>
-														 
 												</tr>
-												
-											
-														<?php }} ?>					
+						<?php }} ?>					
 							
 							
 										
@@ -342,7 +314,7 @@ only screen and (max-width: 760px),
                                 <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>
@@ -369,6 +341,3 @@ only screen and (max-width: 760px),
 </body>
 
 </html>
-<?php
-}
-?>

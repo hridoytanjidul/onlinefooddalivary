@@ -1,61 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
+include("connection/connect.php");
 
-session_start(); 
-error_reporting(0); 
-include("connection/connect.php"); 
+$message = '';
+$form = array('username' => '', 'firstname' => '', 'lastname' => '', 'email' => '', 'phone' => '', 'address' => '');
+
 if (isset($_POST['submit'])) {
-    $username = trim($_POST['username'] ?? '');
-    $firstname = trim($_POST['firstname'] ?? '');
-    $lastname = trim($_POST['lastname'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    foreach ($form as $key => $unused) {
+        $form[$key] = trim($_POST[$key] ?? '');
+    }
     $password = $_POST['password'] ?? '';
     $cpassword = $_POST['cpassword'] ?? '';
-    $address = trim($_POST['address'] ?? '');
 
-    if (empty($username) || empty($firstname) || empty($lastname) || empty($email) || empty($phone) || empty($password) || empty($cpassword)) {
-        $message = "All fields must be required!";
+    if ($form['username'] === '' || $form['firstname'] === '' || $form['lastname'] === '' || $form['email'] === ''
+        || $form['phone'] === '' || $password === '' || $cpassword === '' || $form['address'] === '') {
+        $message = "All fields must be filled in!";
     } else {
-        $check_username = $db->prepare("SELECT username FROM users WHERE username = ?");
-        $check_username->bind_param("s", $username);
+        $check_username = $db->prepare("SELECT u_id FROM users WHERE username = ?");
+        $check_username->bind_param("s", $form['username']);
         $check_username->execute();
         $check_username->store_result();
 
-        $check_email = $db->prepare("SELECT email FROM users WHERE email = ?");
-        $check_email->bind_param("s", $email);
+        $check_email = $db->prepare("SELECT u_id FROM users WHERE email = ?");
+        $check_email->bind_param("s", $form['email']);
         $check_email->execute();
         $check_email->store_result();
 
         if ($password !== $cpassword) {
-            echo "<script>alert('Passwords do not match');</script>";
+            $message = 'Passwords do not match';
         } elseif (strlen($password) < 6) {
-            echo "<script>alert('Password must be at least 6 characters');</script>";
-        } elseif (strlen($phone) < 10) {
-            echo "<script>alert('Invalid phone number!');</script>";
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            echo "<script>alert('Invalid email address. Please enter a valid email!');</script>";
+            $message = 'Password must be at least 6 characters';
+        } elseif (strlen($form['phone']) < 10) {
+            $message = 'Invalid phone number!';
+        } elseif (!filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+            $message = 'Invalid email address. Please enter a valid email!';
         } elseif ($check_username->num_rows > 0) {
-            echo "<script>alert('Username already exists!');</script>";
+            $message = 'Username already exists!';
         } elseif ($check_email->num_rows > 0) {
-            echo "<script>alert('Email already exists!');</script>";
+            $message = 'Email already exists!';
         } else {
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             $mql = $db->prepare("INSERT INTO users(username, f_name, l_name, email, phone, password, address) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $mql->bind_param("sssssss", $username, $firstname, $lastname, $email, $phone, $passwordHash, $address);
+            $mql->bind_param("sssssss", $form['username'], $form['firstname'], $form['lastname'], $form['email'], $form['phone'], $passwordHash, $form['address']);
             $mql->execute();
 
-            header("refresh:0.1;url=login.php");
+            header("Location: login.php");
             exit;
         }
     }
 }
-
-
 ?>
-
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -118,27 +113,30 @@ if (isset($_POST['submit'])) {
                         <div class="widget" >
                            <div class="widget-body">
                             
+							  <?php if ($message !== '') { ?>
+							  <div class="alert alert-danger"><?php echo e($message); ?></div>
+							  <?php } ?>
 							  <form action="" method="post">
                                  <div class="row">
 								  <div class="form-group col-sm-12">
                                        <label for="exampleInputEmail1">User-Name</label>
-                                       <input class="form-control" type="text" name="username" id="example-text-input"> 
+                                       <input class="form-control" type="text" name="username" id="example-text-input" value="<?php echo e($form['username']); ?>"> 
                                     </div>
                                     <div class="form-group col-sm-6">
                                        <label for="exampleInputEmail1">First Name</label>
-                                       <input class="form-control" type="text" name="firstname" id="example-text-input"> 
+                                       <input class="form-control" type="text" name="firstname" id="example-text-input-1" value="<?php echo e($form['firstname']); ?>"> 
                                     </div>
                                     <div class="form-group col-sm-6">
                                        <label for="exampleInputEmail1">Last Name</label>
-                                       <input class="form-control" type="text" name="lastname" id="example-text-input-2"> 
+                                       <input class="form-control" type="text" name="lastname" id="example-text-input-2" value="<?php echo e($form['lastname']); ?>"> 
                                     </div>
                                     <div class="form-group col-sm-6">
                                        <label for="exampleInputEmail1">Email Address</label>
-                                       <input type="text" class="form-control" name="email" id="exampleInputEmail1" aria-describedby="emailHelp"> 
+                                       <input type="text" class="form-control" name="email" id="exampleInputEmail1" aria-describedby="emailHelp" value="<?php echo e($form['email']); ?>"> 
                                     </div>
                                     <div class="form-group col-sm-6">
                                        <label for="exampleInputEmail1">Phone number</label>
-                                       <input class="form-control" type="text" name="phone" id="example-tel-input-3"> 
+                                       <input class="form-control" type="text" name="phone" id="example-tel-input-3" value="<?php echo e($form['phone']); ?>"> 
                                     </div>
                                     <div class="form-group col-sm-6">
                                        <label for="exampleInputPassword1">Password</label>
@@ -150,7 +148,7 @@ if (isset($_POST['submit'])) {
                                     </div>
 									 <div class="form-group col-sm-12">
                                        <label for="exampleTextarea">Delivery Address</label>
-                                       <textarea class="form-control" id="exampleTextarea"  name="address" rows="3"></textarea>
+                                       <textarea class="form-control" id="exampleTextarea" name="address" rows="3"><?php echo e($form['address']); ?></textarea>
                                     </div>
                                    
                                  </div>
@@ -202,7 +200,7 @@ if (isset($_POST['submit'])) {
                            <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>
