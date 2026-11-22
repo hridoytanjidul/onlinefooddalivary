@@ -1,18 +1,15 @@
+<?php
+include("auth.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>All Restaurants</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -161,50 +158,28 @@ session_start();
 										
                                            
                                                	<?php
-												$sql="SELECT * FROM restaurant order by rs_id desc";
-												$query=mysqli_query($db,$sql);
-												
-													if(!mysqli_num_rows($query) > 0 )
-														{
-															echo '<td colspan="11"><center>No Restaurants</center></td>';
-														}
-													else
-														{				
-																	while($rows=mysqli_fetch_array($query))
-																		{
-																					
-																				$mql="SELECT * FROM res_category where c_id='".$rows['c_id']."'";
-																					$res=mysqli_query($db,$mql);
-																					$row=mysqli_fetch_array($res);
-																				
-																					echo ' <tr><td>'.$row['c_name'].'</td>
-																								<td>'.$rows['title'].'</td>
-																								<td>'.$rows['email'].'</td>
-																								<td>'.$rows['phone'].'</td>
-																								<td>'.$rows['url'].'</td>
-																								
-																								
-																								<td>'.$rows['o_hr'].'</td>
-																								<td>'.$rows['c_hr'].'</td>
-																								<td>'.$rows['o_days'].'</td>
-																								
-																								<td>'.$rows['address'].'</td>
-																								
-																								<td><div class="col-md-3 col-lg-8 m-b-10">
-																								<center><img src="Res_img/'.$rows['image'].'" class="img-responsive radius"  style="min-width:150px;min-height:100px;"/></center>
-																								</div></td>
-																								
-																								<td>'.$rows['date'].'</td>
-																									<td><a href="delete_restaurant.php?res_del='.$rows['rs_id'].'" class="btn btn-danger table-action-btn" title="Delete"><i class="fa fa-trash-o"></i></a> 
-																									<a href="update_restaurant.php?res_upd='.$rows['rs_id'].'" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
-																									</td></tr>';																					 
-																						
-																						
-																		}	
-														}
-												
-											
-											?>
+												$sql = "SELECT r.*, c.c_name FROM restaurant r LEFT JOIN res_category c ON c.c_id = r.c_id ORDER BY r.rs_id DESC";
+												$query = mysqli_query($db, $sql);
+												// When there are no rows DataTables shows its own "No data" message.
+												while ($rows = mysqli_fetch_array($query)) {
+													echo '<tr><td>' . e($rows['c_name']) . '</td>
+														<td>' . e($rows['title']) . '</td>
+														<td>' . e($rows['email']) . '</td>
+														<td>' . e($rows['phone']) . '</td>
+														<td>' . e($rows['url']) . '</td>
+														<td>' . e($rows['o_hr']) . '</td>
+														<td>' . e($rows['c_hr']) . '</td>
+														<td>' . e($rows['o_days']) . '</td>
+														<td>' . e($rows['address']) . '</td>
+														<td><div class="col-md-3 col-lg-8 m-b-10">
+															<center><img src="Res_img/' . e($rows['image']) . '" class="img-responsive radius" style="min-width:150px;min-height:100px;" alt="" /></center>
+														</div></td>
+														<td>' . e($rows['date']) . '</td>
+														<td>' . delete_button('delete_restaurant.php', 'res_del', $rows['rs_id'], 'Delete this restaurant and all of its dishes?') . '
+															<a href="update_restaurant.php?res_upd=' . (int) $rows['rs_id'] . '" class="btn btn-info table-action-btn" title="Edit"><i class="fa fa-edit"></i></a>
+														</td></tr>';
+												}
+												?>
                                             
                                            
                                  

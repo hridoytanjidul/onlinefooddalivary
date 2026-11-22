@@ -1,16 +1,14 @@
+<?php
+include("auth.php");
+
+function count_rows($db, $sql)
+{
+    $row = mysqli_fetch_row(mysqli_query($db, $sql));
+    return (int) $row[0];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-if(empty($_SESSION["adm_id"]))
-{
-	header('location:index.php');
-}
-else
-{
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">    
@@ -45,10 +43,8 @@ else
                 <div class="navbar-collapse">
                     <ul class="navbar-nav mr-auto mt-md-0">
                     </ul>
-                    
-                       
-                      
-                      
+
+                    <ul class="navbar-nav my-lg-0">
                     <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-muted  " href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="images/bookingSystem/user-icn.png" alt="user" class="profile-pic" /></a>
                             <div class="dropdown-menu dropdown-menu-right animated zoomIn">
@@ -122,11 +118,7 @@ else
                                     <span><i class="fa fa-home f-s-40 "></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from restaurant";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from restaurant"); ?></h2>
                                     <p class="m-b-0">Restaurants</p>
                                 </div>
                             </div>
@@ -140,11 +132,7 @@ else
                                     <span><i class="fa fa-cutlery f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from dishes";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from dishes"); ?></h2>
                                     <p class="m-b-0">Dishes</p>
                                 </div>
                             </div>
@@ -158,11 +146,7 @@ else
                                     <span><i class="fa fa-users f-s-40"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from users";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from users"); ?></h2>
                                     <p class="m-b-0">Users</p>
                                 </div>
                             </div>
@@ -176,11 +160,7 @@ else
                                     <span><i class="fa fa-shopping-cart f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from users_orders";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from users_orders"); ?></h2>
                                     <p class="m-b-0">Total Orders</p>
                                 </div>
                             </div>
@@ -196,11 +176,7 @@ else
                                     <span><i class="fa fa-th-large f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from res_category";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from res_category"); ?></h2>
                                     <p class="m-b-0">Restro Categories</p>
                                 </div>
                             </div>
@@ -214,11 +190,7 @@ else
                                     <span><i class="fa fa-spinner f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from users_orders WHERE status = 'in process' ";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from users_orders WHERE status = 'in process'"); ?></h2>
                                     <p class="m-b-0">Processing Orders</p>
                                 </div>
                             </div>
@@ -232,11 +204,7 @@ else
                                     <span><i class="fa fa-check f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from users_orders WHERE status = 'closed' ";
-												$result=mysqli_query($db,$sql); 
-													$rws=mysqli_num_rows($result);
-													
-													echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from users_orders WHERE status = 'closed'"); ?></h2>
                                     <p class="m-b-0">Delivered Orders</p>
                                 </div>
                             </div>
@@ -252,11 +220,7 @@ else
                                     <span><i class="fa fa-times f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php $sql="select * from users_orders WHERE status = 'rejected' ";
-                                        $result=mysqli_query($db,$sql); 
-                                            $rws=mysqli_num_rows($result);
-                                            
-                                            echo $rws;?></h2>
+                                    <h2><?php echo count_rows($db, "SELECT COUNT(*) from users_orders WHERE status = 'rejected'"); ?></h2>
                                     <p class="m-b-0">Cancelled Orders</p>
                                 </div>
                             </div>
@@ -270,11 +234,11 @@ else
                                     <span><i class="fa fa-usd f-s-40" aria-hidden="true"></i></span>
                                 </div>
                                 <div class="media-body media-text-right">
-                                    <h2><?php 
-                                        $result = mysqli_query($db, 'SELECT SUM(price) AS value_sum FROM users_orders WHERE status = "closed"'); 
-                                        $row = mysqli_fetch_assoc($result); 
-                                        $sum = $row['value_sum'];
-                                        echo $sum;
+                                    <h2><?php
+                                        // price is the unit price, so multiply by quantity
+                                        $result = mysqli_query($db, "SELECT COALESCE(SUM(price * quantity), 0) AS value_sum FROM users_orders WHERE status = 'closed'");
+                                        $row = mysqli_fetch_assoc($result);
+                                        echo '$' . number_format((float) $row['value_sum'], 2);
                                         ?></h2>
                                     <p class="m-b-0">Total Earnings</p>
                                 </div>
@@ -297,6 +261,3 @@ else
 </body>
 
 </html>
-<?php
-}
-?>

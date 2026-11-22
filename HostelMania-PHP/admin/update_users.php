@@ -1,13 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
+include("auth.php");
 
+$userId = (int) ($_GET['user_upd'] ?? 0);
+$error = '';
+$success = '';
 
-session_start();
-error_reporting(0);
-include("../connection/connect.php");
+$stmt = $db->prepare("SELECT * FROM users WHERE u_id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$newrow = $stmt->get_result()->fetch_assoc();
+if (!$newrow) {
+    header("Location: all_users.php");
+    exit;
+}
 
-if (isset($_POST['submit'])) {
+if (isset($_POST['submit']) && !csrf_valid()) {
+    $error = admin_alert('danger', '<strong>' . CSRF_ERROR . '</strong>');
+} elseif (isset($_POST['submit'])) {
     $username = trim($_POST['uname'] ?? '');
     $firstName = trim($_POST['fname'] ?? '');
     $lastName = trim($_POST['lname'] ?? '');
@@ -15,58 +24,48 @@ if (isset($_POST['submit'])) {
     $phone = trim($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
 
+    $dup = $db->prepare("SELECT u_id FROM users WHERE (username = ? OR email = ?) AND u_id <> ?");
+    $dup->bind_param("ssi", $username, $email, $userId);
+    $dup->execute();
+    $dup->store_result();
+
     if (empty($username) || empty($firstName) || empty($lastName) || empty($email) || empty($phone)) {
-        $error = '<div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <strong>All fields Required!</strong>
-        </div>';
+        $error = admin_alert('danger', '<strong>All fields Required!</strong>');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = admin_alert('danger', '<strong>invalid email!</strong>');
+    } elseif ($password !== '' && strlen($password) < 6) {
+        $error = admin_alert('danger', '<strong>Password must be >=6!</strong>');
+    } elseif (strlen($phone) < 10) {
+        $error = admin_alert('danger', '<strong>invalid phone!</strong>');
+    } elseif ($dup->num_rows > 0) {
+        $error = admin_alert('danger', '<strong>Username or email is already used by another user!</strong>');
     } else {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = '<div class="alert alert-danger alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <strong>invalid email!</strong>
-            </div>';
-        } elseif (!empty($password) && strlen($password) < 6) {
-            $error = '<div class="alert alert-danger alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <strong>Password must be >=6!</strong>
-            </div>';
-        } elseif (strlen($phone) < 10) {
-            $error = '<div class="alert alert-danger alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <strong>invalid phone!</strong>
-            </div>';
+        if ($password !== '') {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ?, password = ? WHERE u_id = ?");
+            $mql->bind_param("ssssssi", $username, $firstName, $lastName, $email, $phone, $passwordHash, $userId);
         } else {
-            $userId = $_GET['user_upd'] ?? 0;
-
-            if (!empty($password)) {
-                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ?, password = ? WHERE u_id = ?");
-                $mql->bind_param("ssssssi", $username, $firstName, $lastName, $email, $phone, $passwordHash, $userId);
-            } else {
-                $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ? WHERE u_id = ?");
-                $mql->bind_param("sssssi", $username, $firstName, $lastName, $email, $phone, $userId);
-            }
-
-            $mql->execute();
-
-            $success = '<div class="alert alert-success alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <strong>User Updated!</strong>
-            </div>';
+            $mql = $db->prepare("UPDATE users SET username = ?, f_name = ?, l_name = ?, email = ?, phone = ? WHERE u_id = ?");
+            $mql->bind_param("sssssi", $username, $firstName, $lastName, $email, $phone, $userId);
         }
+        $mql->execute();
+
+        $success = admin_alert('success', '<strong>User Updated!</strong>');
     }
 
+    // show what was submitted (or just saved) in the form
+    $newrow = array_merge($newrow, array('username' => $username, 'f_name' => $firstName, 'l_name' => $lastName, 'email' => $email, 'phone' => $phone));
 }
-
 ?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>Update Users</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -198,10 +197,9 @@ if (isset($_POST['submit'])) {
                                 <h4 class="m-b-0 text-white">Update Users</h4>
                             </div>
                             <div class="card-body">
-							  <?php $ssql ="select * from users where u_id='$_GET[user_upd]'";
-													$res=mysqli_query($db, $ssql); 
-													$newrow=mysqli_fetch_array($res);?>
+							  
                                 <form action='' method='post'  >
+                                    <?php echo csrf_field(); ?>
                                     <div class="form-body">
                                       
                                         <hr>
@@ -209,14 +207,14 @@ if (isset($_POST['submit'])) {
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Username</label>
-                                                    <input type="text" name="uname" class="form-control" value="<?php  echo $newrow['username']; ?>" placeholder="username">
+                                                    <input type="text" name="uname" class="form-control" value="<?php echo e($newrow['username']); ?>" placeholder="username">
                                                    </div>
                                             </div>
                                      
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">First-Name</label>
-                                                    <input type="text" name="fname" class="form-control form-control-danger"  value="<?php  echo $newrow['f_name'];  ?>" placeholder="jon">
+                                                    <input type="text" name="fname" class="form-control form-control-danger"  value="<?php echo e($newrow['f_name']); ?>" placeholder="jon">
                                                     </div>
                                             </div>
                                       
@@ -226,14 +224,14 @@ if (isset($_POST['submit'])) {
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Last-Name </label>
-                                                    <input type="text" name="lname" class="form-control" placeholder="doe"  value="<?php  echo $newrow['l_name']; ?>">
+                                                    <input type="text" name="lname" class="form-control" placeholder="doe"  value="<?php echo e($newrow['l_name']); ?>">
                                                    </div>
                                             </div>
                                      
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Email</label>
-                                                    <input type="text" name="email" class="form-control form-control-danger"  value="<?php  echo $newrow['email'];  ?>" placeholder="example@gmail.com">
+                                                    <input type="text" name="email" class="form-control form-control-danger"  value="<?php echo e($newrow['email']); ?>" placeholder="example@gmail.com">
                                                     </div>
                                             </div>
                                         
@@ -243,14 +241,14 @@ if (isset($_POST['submit'])) {
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Password</label>
-                                                    <input type="text" name="password" class="form-control form-control-danger"   value="<?php  echo $newrow['password'];  ?>" placeholder="password">
+                                                    <input type="password" name="password" class="form-control form-control-danger" value="" placeholder="Leave blank to keep the current password" autocomplete="new-password">
                                                     </div>
                                                 </div>
                                         
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Phone</label>
-                                                    <input type="text" name="phone" class="form-control form-control-danger"   value="<?php  echo $newrow['phone'];  ?>" placeholder="phone">
+                                                    <input type="text" name="phone" class="form-control form-control-danger"   value="<?php echo e($newrow['phone']); ?>" placeholder="phone">
                                                     </div>
                                                 </div>
                                             </div>

@@ -1,119 +1,51 @@
+<?php
+include("auth.php");
+
+$error = '';
+$success = '';
+$form = array('d_name' => '', 'about' => '', 'price' => '', 'res_name' => 0);
+
+if (isset($_POST['submit']) && !csrf_valid()) {
+    $error = admin_alert('danger', '<strong>' . CSRF_ERROR . '</strong>');
+} elseif (isset($_POST['submit'])) {
+    $form = array(
+        'd_name'   => trim($_POST['d_name'] ?? ''),
+        'about'    => trim($_POST['about'] ?? ''),
+        'price'    => trim(str_replace('$', '', $_POST['price'] ?? '')),
+        'res_name' => (int) ($_POST['res_name'] ?? 0),
+    );
+
+    if ($form['d_name'] === '' || $form['about'] === '' || $form['price'] === '' || $form['res_name'] <= 0) {
+        $error = admin_alert('danger', '<strong>All fields Must be Fillup!</strong>');
+    } elseif (!is_numeric($form['price']) || $form['price'] < 0) {
+        $error = admin_alert('danger', '<strong>Price must be a valid number!</strong>');
+    } else {
+        $uploadError = null;
+        $image = save_uploaded_image($_FILES['file'] ?? null, __DIR__ . '/Res_img/dishes', $uploadError);
+
+        if ($image === null) {
+            $error = admin_alert('danger', '<strong>' . e($uploadError) . '</strong>');
+        } else {
+            $price = (float) $form['price'];
+            $stmt = $db->prepare("INSERT INTO dishes(rs_id, title, slogan, price, img) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("issds", $form['res_name'], $form['d_name'], $form['about'], $price, $image);
+            $stmt->execute();
+
+            $success = admin_alert('success', 'New Dish Added Successfully.');
+            $form = array('d_name' => '', 'about' => '', 'price' => '', 'res_name' => 0);
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-
-
-
-if(isset($_POST['submit']))          
-{
-	
-			
-		
-			
-		  
-		
-		
-		if(empty($_POST['d_name'])||empty($_POST['about'])||$_POST['price']==''||$_POST['res_name']=='')
-		{	
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>All fields Must be Fillup!</strong>
-															</div>';
-									
-		
-								
-		}
-	else
-		{
-		
-				$fname = $_FILES['file']['name'];
-								$temp = $_FILES['file']['tmp_name'];
-								$fsize = $_FILES['file']['size'];
-								$extension = explode('.',$fname);
-								$extension = strtolower(end($extension));  
-								$fnew = uniqid().'.'.$extension;
-   
-								$store = "Res_img/dishes/".basename($fnew);                    
-	
-					if($extension == 'jpg'||$extension == 'png'||$extension == 'gif' )
-					{        
-									if($fsize>=1000000)
-										{
-		
-		
-												$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Max Image Size is 1024kb!</strong> Try different Image.
-															</div>';
-	   
-										}
-		
-									else
-										{
-												
-												
-												
-				                                 
-												$stmt = $db->prepare("INSERT INTO dishes(rs_id, title, slogan, price, img) VALUE(?, ?, ?, ?, ?)");
-												$stmt->bind_param("issds", $_POST['res_name'], $_POST['d_name'], $_POST['about'], $_POST['price'], $fnew);
-												$stmt->execute();
-												move_uploaded_file($temp, $store);
-			  
-													$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																 New Dish Added Successfully.
-															</div>';
-                
-	
-										}
-					}
-					elseif($extension == '')
-					{
-						$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>select image</strong>
-															</div>';
-					}
-					else{
-					
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>invalid extension!</strong>png, jpg, Gif are accepted.
-															</div>';
-						
-	   
-						}               
-	   
-	   
-	   }
-
-
-
-	
-	
-	
-
-}
-
-
-
-
-
-
-
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">   
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>Add Menu</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -235,6 +167,7 @@ if(isset($_POST['submit']))
                             </div>
                             <div class="card-body">
                                 <form action='' method='post'  enctype="multipart/form-data">
+                                    <?php echo csrf_field(); ?>
                                     <div class="form-body">
                                        
                                         <hr>
@@ -242,14 +175,14 @@ if(isset($_POST['submit']))
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Dish Name</label>
-                                                    <input type="text" name="d_name" class="form-control" >
+                                                    <input type="text" name="d_name" class="form-control" value="<?php echo e($form['d_name']); ?>">
                                                    </div>
                                             </div>
                                       
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Description</label>
-                                                    <input type="text" name="about" class="form-control form-control-danger" >
+                                                    <input type="text" name="about" class="form-control form-control-danger" value="<?php echo e($form['about']); ?>">
                                                     </div>
                                             </div>
                                      
@@ -259,14 +192,14 @@ if(isset($_POST['submit']))
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Price </label>
-                                                    <input type="text" name="price" class="form-control" placeholder="$">
+                                                    <input type="text" name="price" class="form-control" placeholder="$" value="<?php echo e($form['price']); ?>">
                                                    </div>
                                             </div>
                                    
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Image</label>
-                                                    <input type="file" name="file"  id="lastName" class="form-control form-control-danger" placeholder="12n">
+                                                    <input type="file" name="file" id="lastName" class="form-control form-control-danger" accept="image/png,image/jpeg,image/gif">
                                                     </div>
                                             </div>
                                         </div>
@@ -284,16 +217,15 @@ if(isset($_POST['submit']))
 											 <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label class="control-label">Select Restaurant</label>
-													<select name="res_name" class="form-control custom-select" data-placeholder="Choose a Category" tabindex="1">
-                                                        <option>--Select Restaurant--</option>
-                                                 <?php $ssql ="select * from restaurant";
-													$res=mysqli_query($db, $ssql); 
-													while($row=mysqli_fetch_array($res))  
-													{
-                                                       echo' <option value="'.$row['rs_id'].'">'.$row['title'].'</option>';;
-													}  
-                                                 
-													?> 
+													<select name="res_name" class="form-control custom-select" data-placeholder="Choose a Restaurant" tabindex="1">
+                                                        <option value="">--Select Restaurant--</option>
+                                                 <?php
+                                                    $res = mysqli_query($db, "SELECT rs_id, title FROM restaurant ORDER BY title");
+                                                    while ($row = mysqli_fetch_array($res)) {
+                                                        $selected = ((int) $form['res_name'] === (int) $row['rs_id']) ? ' selected' : '';
+                                                        echo '<option value="' . (int) $row['rs_id'] . '"' . $selected . '>' . e($row['title']) . '</option>';
+                                                    }
+                                                 ?>
 													 </select>
                                                 </div>
                                             </div>

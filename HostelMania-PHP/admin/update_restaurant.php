@@ -1,119 +1,75 @@
+<?php
+include("auth.php");
+
+$resId = (int) ($_GET['res_upd'] ?? 0);
+$error = '';
+$success = '';
+
+$stmt = $db->prepare("SELECT * FROM restaurant WHERE rs_id = ?");
+$stmt->bind_param("i", $resId);
+$stmt->execute();
+$restaurant = $stmt->get_result()->fetch_assoc();
+if (!$restaurant) {
+    header("Location: all_restaurant.php");
+    exit;
+}
+$form = array(
+    'res_name' => $restaurant['title'], 'email' => $restaurant['email'], 'phone' => $restaurant['phone'],
+    'url' => $restaurant['url'], 'o_hr' => $restaurant['o_hr'], 'c_hr' => $restaurant['c_hr'],
+    'o_days' => $restaurant['o_days'], 'c_name' => (int) $restaurant['c_id'], 'address' => $restaurant['address'],
+);
+
+if (isset($_POST['submit']) && !csrf_valid()) {
+    $error = admin_alert('danger', '<strong>' . CSRF_ERROR . '</strong>');
+} elseif (isset($_POST['submit'])) {
+    $form = array(
+        'res_name' => trim($_POST['res_name'] ?? ''),
+        'email'    => trim($_POST['email'] ?? ''),
+        'phone'    => trim($_POST['phone'] ?? ''),
+        'url'      => trim($_POST['url'] ?? ''),
+        'o_hr'     => trim($_POST['o_hr'] ?? ''),
+        'c_hr'     => trim($_POST['c_hr'] ?? ''),
+        'o_days'   => trim($_POST['o_days'] ?? ''),
+        'c_name'   => (int) ($_POST['c_name'] ?? 0),
+        'address'  => trim($_POST['address'] ?? ''),
+    );
+
+    if ($form['c_name'] <= 0 || $form['res_name'] === '' || $form['email'] === '' || $form['phone'] === '' || $form['url'] === ''
+        || $form['o_hr'] === '' || $form['c_hr'] === '' || $form['o_days'] === '' || $form['address'] === '') {
+        $error = admin_alert('danger', '<strong>All fields Must be Fillup!</strong>');
+    } elseif (!filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+        $error = admin_alert('danger', '<strong>Invalid email address!</strong>');
+    } else {
+        // The image is optional when editing: keep the current one if no new file is chosen.
+        $image = $restaurant['image'];
+        if (isset($_FILES['file']) && $_FILES['file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $uploadError = null;
+            $image = save_uploaded_image($_FILES['file'], __DIR__ . '/Res_img', $uploadError);
+            if ($image === null) {
+                $error = admin_alert('danger', '<strong>' . e($uploadError) . '</strong>');
+            }
+        }
+
+        if ($error === '') {
+            $stmt = $db->prepare("UPDATE restaurant SET c_id = ?, title = ?, email = ?, phone = ?, url = ?, o_hr = ?, c_hr = ?, o_days = ?, address = ?, image = ? WHERE rs_id = ?");
+            $stmt->bind_param("isssssssssi", $form['c_name'], $form['res_name'], $form['email'], $form['phone'], $form['url'], $form['o_hr'], $form['c_hr'], $form['o_days'], $form['address'], $image, $resId);
+            $stmt->execute();
+            $restaurant['image'] = $image;
+
+            $success = admin_alert('success', '<strong>Record Updated!</strong>');
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
-<?php
-include("../connection/connect.php");
-error_reporting(0);
-session_start();
-
-
-
-
-if(isset($_POST['submit']))        
-{
-	
-			
-		
-			
-		  
-		
-		
-		if(empty($_POST['c_name'])||empty($_POST['res_name'])||$_POST['email']==''||$_POST['phone']==''||$_POST['url']==''||$_POST['o_hr']==''||$_POST['c_hr']==''||$_POST['o_days']==''||$_POST['address']=='')
-		{	
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>All fields Must be Fillup!</strong>
-															</div>';
-									
-		
-								
-		}
-	else
-		{
-		
-				$fname = $_FILES['file']['name'];
-								$temp = $_FILES['file']['tmp_name'];
-								$fsize = $_FILES['file']['size'];
-								$extension = explode('.',$fname);
-								$extension = strtolower(end($extension));  
-								$fnew = uniqid().'.'.$extension;
-   
-								$store = "Res_img/".basename($fnew);                   
-	
-					if($extension == 'jpg'||$extension == 'png'||$extension == 'gif' )
-					{        
-									if($fsize>=1000000)
-										{
-		
-		
-												$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Max Image Size is 1024kb!</strong> Try different Image.
-															</div>';
-	   
-										}
-		
-									else
-										{
-												
-												
-													$res_name = $_POST['res_name'];
-													$resId = $_GET['res_upd'] ?? 0;
-													$stmt = $db->prepare("UPDATE restaurant SET c_id = ?, title = ?, email = ?, phone = ?, url = ?, o_hr = ?, c_hr = ?, o_days = ?, address = ?, image = ? WHERE rs_id = ?");
-													$stmt->bind_param("isssssssssi", $_POST['c_name'], $res_name, $_POST['email'], $_POST['phone'], $_POST['url'], $_POST['o_hr'], $_POST['c_hr'], $_POST['o_days'], $_POST['address'], $fnew, $resId);
-													$stmt->execute();
-												move_uploaded_file($temp, $store);
-			  
-													$success = 	'<div class="alert alert-success alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>Record Updated!</strong>.
-															</div>';
-                
-	
-										}
-					}
-					elseif($extension == '')
-					{
-						$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>select image</strong>
-															</div>';
-					}
-					else{
-					
-											$error = 	'<div class="alert alert-danger alert-dismissible fade show">
-																<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																<strong>invalid extension!</strong>png, jpg, Gif are accepted.
-															</div>';
-						
-	   
-						}               
-	   
-	   
-	   }
-
-
-
-	
-	
-	
-
-}
-
-
-
-
-
-
-
-
-?>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">   
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icn.png">
     <title>Update Restaurant</title>
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
@@ -136,73 +92,16 @@ if(isset($_POST['submit']))
                     </a>
                 </div>
                 <div class="navbar-collapse">
-    
+
                     <ul class="navbar-nav mr-auto mt-md-0">
-                     
-                        <li class="nav-item dropdown mega-dropdown"> <a class="nav-link dropdown-toggle text-muted  " href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-th-large"></i></a>
-                            <div class="dropdown-menu animated zoomIn">
-                                <ul class="mega-dropdown-menu row">
-
-
-                                    <li class="col-lg-3  m-b-30">
-                                        <h4 class="m-b-20">CONTACT US</h4>
-                            
-                                        <form>
-                                            <div class="form-group">
-                                                <input type="text" class="form-control" id="exampleInputname1" placeholder="Enter Name"> </div>
-                                            <div class="form-group">
-                                                <input type="email" class="form-control" placeholder="Enter email"> </div>
-                                            <div class="form-group">
-                                                <textarea class="form-control" id="exampleTextarea" rows="3" placeholder="Message"></textarea>
-                                            </div>
-                                            <button type="submit" class="btn btn-info">Submit</button>
-                                        </form>
-                                    </li>
-                                    <li class="col-lg-3 col-xlg-3 m-b-30">
-                                        <h4 class="m-b-20">List style</h4>
-                             
-                                        <ul class="list-style-none">
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                        </ul>
-                                    </li>
-                                    <li class="col-lg-3 col-xlg-3 m-b-30">
-                                        <h4 class="m-b-20">List style</h4>
-                           
-                                        <ul class="list-style-none">
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                        </ul>
-                                    </li>
-                                    <li class="col-lg-3 col-xlg-3 m-b-30">
-                                        <h4 class="m-b-20">List style</h4>
-                             
-                                        <ul class="list-style-none">
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                            <li><a href="javascript:void(0)"><i class="fa fa-check text-success"></i> This Is Another Link</a></li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                      
                     </ul>
-               
-                    <ul class="navbar-nav my-lg-0">                                                       
+
+                    <ul class="navbar-nav my-lg-0">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-muted  " href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="images/bookingSystem/user-icn.png" alt="user" class="profile-pic" /></a>
                             <div class="dropdown-menu dropdown-menu-right animated zoomIn">
                                 <ul class="dropdown-user">
-                               <li><a href="logout.php"><i class="fa fa-power-off"></i> Logout</a></li>
+                                    <li><a href="logout.php"><i class="fa fa-power-off"></i> Logout</a></li>
                                 </ul>
                             </div>
                         </li>
@@ -271,23 +170,22 @@ if(isset($_POST['submit']))
                             
                             <div class="card-body">
                                 <form action='' method='post'  enctype="multipart/form-data">
+                                    <?php echo csrf_field(); ?>
                                     <div class="form-body">
-                                       <?php $ssql ="select * from restaurant where rs_id='$_GET[res_upd]'";
-													$res=mysqli_query($db, $ssql); 
-													$row=mysqli_fetch_array($res);?>
+                                       
                                         <hr>
                                         <div class="row p-t-20">
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Restaurant Name</label>
-                                                    <input type="text" name="res_name" value="<?php echo $row['title'];  ?>" class="form-control" placeholder="John doe">
+                                                    <input type="text" name="res_name" value="<?php echo e($form['res_name']); ?>" class="form-control" placeholder="John doe">
                                                    </div>
                                             </div>
                                    
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Bussiness E-mail</label>
-                                                    <input type="text" name="email" value="<?php echo $row['email'];  ?>"class="form-control form-control-danger" placeholder="example@gmail.com">
+                                                    <input type="text" name="email" value="<?php echo e($form['email']); ?>" class="form-control form-control-danger" placeholder="example@gmail.com">
                                                     </div>
                                             </div>
                                         
@@ -297,14 +195,14 @@ if(isset($_POST['submit']))
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Phone </label>
-                                                    <input type="text" name="phone" class="form-control" value="<?php echo $row['phone'];  ?>" placeholder="1-(555)-555-5555">
+                                                    <input type="text" name="phone" class="form-control" value="<?php echo e($form['phone']); ?>" placeholder="1-(555)-555-5555">
                                                    </div>
                                             </div>
                          
                                             <div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">website URL</label>
-                                                    <input type="text" name="url" class="form-control form-control-danger" value="<?php echo $row['url'];  ?>" placeholder="http://example.com">
+                                                    <input type="text" name="url" class="form-control form-control-danger" value="<?php echo e($form['url']); ?>" placeholder="http://example.com">
                                                     </div>
                                             </div>
                                        
@@ -315,13 +213,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Open Hours</label>
                                                     <select name="o_hr" class="form-control custom-select"  data-placeholder="Choose a Category" >
-                                                     <option>--Select your Hours--</option>
-                                                        <option value="6am">6am</option>
-                                                        <option value="7am">7am</option> 
-														<option value="8am">8am</option>
-														<option value="9am">9am</option>
-														<option value="10am">10am</option>
-														<option value="11am">11am</option>
+                                                        <option value="">--Select your Hours--</option>
+                                                        <?php echo select_options($OPEN_HOURS, $form['o_hr']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -330,13 +223,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Close Hours</label>
                                                     <select name="c_hr" class="form-control custom-select"    data-placeholder="Choose a Category" >
-                                                     <option>--Select your Hours--</option>
-                                                          <option value="3pm">3pm</option>
-                                                        <option value="4pm">4pm</option> 
-														<option value="5pm">5pm</option>
-														<option value="6pm">6pm</option>
-														<option value="7pm">7pm</option>
-														<option value="8pm">8pm</option>
+                                                        <option value="">--Select your Hours--</option>
+                                                        <?php echo select_options($CLOSE_HOURS, $form['c_hr']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -345,13 +233,8 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Open Days</label>
                                                     <select name="o_days" class="form-control custom-select"  data-placeholder="Choose a Category" tabindex="1">
-                                                        <option>--Select your Days--</option>
-                                                        <option value="mon-tue">mon-tue</option>
-                                                        <option value="mon-wed">mon-wed</option> 
-														<option value="mon-thu">mon-thu</option>
-														<option value="mon-fri">mon-fri</option>
-														<option value="mon-sat">mon-sat</option>
-														<option value="24hr-x7">24hr-x7</option>
+                                                        <option value="">--Select your Days--</option>
+                                                        <?php echo select_options($OPEN_DAYS, $form['o_days']); ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -360,7 +243,8 @@ if(isset($_POST['submit']))
 											<div class="col-md-6">
                                                 <div class="form-group has-danger">
                                                     <label class="control-label">Image</label>
-                                                    <input type="file" name="file"  id="lastName"  class="form-control form-control-danger" placeholder="12n">
+                                                    <input type="file" name="file" id="lastName" class="form-control form-control-danger" accept="image/png,image/jpeg,image/gif">
+                                                    <small class="form-text text-muted">Current: <img src="Res_img/<?php echo e($restaurant['image']); ?>" alt="" style="max-height:40px;"> Leave empty to keep it.</small>
                                                     </div>
                                             </div>
                                    
@@ -369,16 +253,15 @@ if(isset($_POST['submit']))
                                                 <div class="form-group">
                                                     <label class="control-label">Select Category</label>
 													<select name="c_name" class="form-control custom-select" data-placeholder="Choose a Category" tabindex="1">
-                                                        <option>--Select Category--</option>
-                                                 <?php $ssql ="select * from res_category";
-													$res=mysqli_query($db, $ssql); 
-													while($rows=mysqli_fetch_array($res))  
-													{
-                                                       echo' <option value="'.$rows['c_id'].'">'.$rows['c_name'].'</option>';;
-													}  
-                                                 
-													?> 
-													 </select>
+                                                        <option value="">--Select Category--</option>
+                                                        <?php
+                                                    $res = mysqli_query($db, "SELECT c_id, c_name FROM res_category ORDER BY c_name");
+                                                    while ($rows = mysqli_fetch_array($res)) {
+                                                        $selected = ((int) $form['c_name'] === (int) $rows['c_id']) ? ' selected' : '';
+                                                        echo '<option value="' . (int) $rows['c_id'] . '"' . $selected . '>' . e($rows['c_name']) . '</option>';
+                                                    }
+                                                 ?>
+                                                    </select>
                                                 </div>
                                             </div>
 											
@@ -393,7 +276,7 @@ if(isset($_POST['submit']))
                                             <div class="col-md-12 ">
                                                 <div class="form-group">
                                                     
-                                                    <textarea name="address" type="text" style="height:100px;" class="form-control" > <?php echo $row['address']; ?> </textarea>
+                                                    <textarea name="address" style="height:100px;" class="form-control"><?php echo e($form['address']); ?></textarea>
                                                 </div>
                                             </div>
                                         </div>

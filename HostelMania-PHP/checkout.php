@@ -1,54 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
 include("connection/connect.php");
 include_once 'product-action.php';
-error_reporting(0);
-session_start();
 
-
-function function_alert() { 
-      
-
-    echo "<script>alert('Thank you. Your Order has been placed!');</script>"; 
-    echo "<script>window.location.replace('your_orders.php');</script>"; 
-} 
-
-if(empty($_SESSION["user_id"]))
-{
-	header('location:login.php');
+if (empty($_SESSION["user_id"])) {
+    header('Location: login.php');
+    exit;
 }
-else{
 
-										  
-												foreach ($_SESSION["cart_item"] as $item)
-												{
-											
-												$item_total += ($item["price"]*$item["quantity"]);
-												
-													if($_POST['submit'])
-													{
-						
-													$SQL="insert into users_orders(u_id,title,quantity,price) values('".$_SESSION["user_id"]."','".$item["title"]."','".$item["quantity"]."','".$item["price"]."')";
-						
-														mysqli_query($db,$SQL);
-														
-                                                        
-                                                        unset($_SESSION["cart_item"]);
-                                                        unset($item["title"]);
-                                                        unset($item["quantity"]);
-                                                        unset($item["price"]);
-														$success = "Thank you. Your order has been placed!";
+$cartItems = $_SESSION['cart_item'] ?? array();
+$item_total = 0;
+foreach ($cartItems as $item) {
+    $item_total += $item["price"] * $item["quantity"];
+}
 
-                                                        function_alert();
+$orderPlaced = false;
+$message = '';
+if (isset($_POST['submit'])) {
+    if (!csrf_valid()) {
+        $message = CSRF_ERROR;
+    } elseif (empty($cartItems)) {
+        $message = 'Your cart is empty. Please add some dishes first.';
+    } else {
+        $userId = (int) $_SESSION["user_id"];
+        $db->begin_transaction();
+        $stmt = $db->prepare("INSERT INTO users_orders(u_id, title, quantity, price) VALUES (?, ?, ?, ?)");
+        foreach ($cartItems as $item) {
+            $title = $item["title"];
+            $quantity = (int) $item["quantity"];
+            $price = (float) $item["price"];
+            $stmt->bind_param("isid", $userId, $title, $quantity, $price);
+            $stmt->execute();
+        }
+        $db->commit();
 
-														
-														
-													}
-												}
+        unset($_SESSION["cart_item"]);
+        $orderPlaced = true;
+    }
+}
 ?>
-
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -63,6 +54,12 @@ else{
     <link href="css/animate.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet"> </head>
 <body>
+<?php if ($orderPlaced) { ?>
+    <script>
+        alert('Thank you. Your Order has been placed!');
+        window.location.replace('your_orders.php');
+    </script>
+<?php } ?>
     
     <div class="site-wrapper">
         <header id="header" class="header-scroll top-header headrom">
@@ -110,8 +107,8 @@ else{
 			
                 <div class="container">
                  
-					   <span style="color:green;">
-								<?php echo $success; ?>
+					   <span style="color:red;">
+								<?php echo e($message); ?>
 										</span>
 					
                 </div>
@@ -121,10 +118,10 @@ else{
 				  
             <div class="container m-t-30">
 			<form action="" method="post">
+				<?php echo csrf_field(); ?>
                 <div class="widget clearfix">
                     
                     <div class="widget-body">
-                        <form method="post" action="#">
                             <div class="row">
                                 
                                 <div class="col-sm-12">
@@ -140,7 +137,7 @@ else{
 											   
                                                     <tr>
                                                         <td>Cart Subtotal</td>
-                                                        <td> <?php echo "$".$item_total; ?></td>
+                                                        <td> <?php echo '$' . number_format($item_total, 2); ?></td>
                                                     </tr>
                                                     <tr>
                                                         <td>Delivery Charges</td>
@@ -148,7 +145,7 @@ else{
                                                     </tr>
                                                     <tr>
                                                         <td class="text-color"><strong>Total</strong></td>
-                                                        <td class="text-color"><strong> <?php echo "$".$item_total; ?></strong></td>
+                                                        <td class="text-color"><strong> <?php echo '$' . number_format($item_total, 2); ?></strong></td>
                                                     </tr>
                                                 </tbody>
 												
@@ -170,9 +167,8 @@ else{
                                                     <input name="mod"  type="radio" value="paypal" disabled class="custom-control-input"> <span class="custom-control-indicator"></span> <span class="custom-control-description">Paypal <img src="images/paypal.jpg" alt="" width="90"></span> </label>
                                             </li>
                                         </ul>
-                                        <p class="text-xs-center"> <input type="submit" onclick="return confirm('Do you want to confirm the order?');" name="submit"  class="btn btn-success btn-block" value="Order Now"> </p>
+                                        <p class="text-xs-center"> <input type="submit" onclick="return confirm('Do you want to confirm the order?');" name="submit" class="btn btn-success btn-block" value="Order Now"<?php echo empty($cartItems) ? ' disabled' : ''; ?>> </p>
                                     </div>
-									</form>
                                 </div>
                             </div>
                        
@@ -208,7 +204,7 @@ else{
                                 <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>
@@ -233,7 +229,3 @@ else{
 </body>
 
 </html>
-
-<?php
-}
-?>

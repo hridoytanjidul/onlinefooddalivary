@@ -1,3 +1,43 @@
+<?php
+include("connection/connect.php");
+
+if (!empty($_SESSION["user_id"])) {
+    header("Location: index.php");
+    exit;
+}
+
+$message = '';
+if (isset($_POST['submit'])) {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($username === '' || $password === '') {
+        $message = "Please enter your username and password.";
+    } else {
+        $stmt = $db->prepare("SELECT u_id, password FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+
+        if ($row && verify_password($password, $row['password'])) {
+            // Replace a legacy MD5 hash with a secure one.
+            if (password_needs_rehash($row['password'], PASSWORD_DEFAULT)) {
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                $upd = $db->prepare("UPDATE users SET password = ? WHERE u_id = ?");
+                $upd->bind_param("si", $newHash, $row['u_id']);
+                $upd->execute();
+            }
+
+            session_regenerate_id(true);
+            $_SESSION["user_id"] = $row['u_id'];
+            header("Location: index.php");
+            exit;
+        }
+
+        $message = "Invalid Username or Password!";
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en" >
 
@@ -63,35 +103,10 @@
         </header>
 <div style=" background-image: url('images/img/pimg.jpg');">
 
-<?php
-include("connection/connect.php"); 
-error_reporting(0); 
-session_start(); 
-if (isset($_POST['submit'])) {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
 
-    if (!empty($username) && !empty($password)) {
-        $stmt = $db->prepare("SELECT u_id, password FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-
-        if ($row && (password_verify($password, $row['password']) || hash_equals($row['password'], md5($password)))) {
-            $_SESSION["user_id"] = $row['u_id'];
-            header("refresh:1;url=index.php");
-            exit;
-        }
-
-        $message = "Invalid Username or Password!";
-    }
-}
-?>
   
 
 <div class="pen-title">
-  <
 </div>
 
 <div class="module form-module">
@@ -100,10 +115,9 @@ if (isset($_POST['submit'])) {
   </div>
   <div class="form">
     <h2>Login to your account</h2>
-	  <span style="color:red;"><?php echo $message; ?></span> 
-   <span style="color:green;"><?php echo $success; ?></span>
+	  <span style="color:red;"><?php echo e($message); ?></span>
     <form action="" method="post">
-      <input type="text" placeholder="Username"  name="username"/>
+      <input type="text" placeholder="Username" name="username" value="<?php echo e($_POST['username'] ?? ''); ?>"/>
       <input type="password" placeholder="Password" name="password"/>
       <input type="submit" id="buttn" name="submit" value="Login" />
     </form>
@@ -111,7 +125,8 @@ if (isset($_POST['submit'])) {
   
   <div class="cta">Not registered?<a href="registration.php" style="color:#5c4ac7;"> Create an account</a></div>
 </div>
-  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+</div>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
 
   
 
@@ -151,7 +166,7 @@ if (isset($_POST['submit'])) {
                         <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>

@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
 include("connection/connect.php");
-error_reporting(0);
-session_start();
 ?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -91,11 +89,11 @@ session_start();
 						
 													 echo' <div class="col-sm-12 col-md-12 col-lg-8 text-xs-center text-sm-left">
 															<div class="entry-logo">
-																<a class="img-fluid" href="dishes.php?res_id='.$rows['rs_id'].'" > <img src="admin/Res_img/'.$rows['image'].'" alt="Food logo"></a>
+																<a class="img-fluid" href="dishes.php?res_id='.(int)$rows['rs_id'].'" > <img src="admin/Res_img/'.e($rows['image']).'" alt="Food logo"></a>
 															</div>
 															<!-- end:Logo -->
 															<div class="entry-dscr">
-																<h5><a href="dishes.php?res_id='.$rows['rs_id'].'" >'.$rows['title'].'</a></h5> <span>'.$rows['address'].'</span>
+																<h5><a href="dishes.php?res_id='.(int)$rows['rs_id'].'" >'.e($rows['title']).'</a></h5> <span>'.e($rows['address']).'</span>
 																
 															</div>
 															<!-- end:Entry description -->
@@ -105,7 +103,7 @@ session_start();
 																<div class="right-content bg-white">
 																	<div class="right-review">
 																		
-																		<a href="dishes.php?res_id='.$rows['rs_id'].'" class="btn btn-purple">View Menu</a> </div>
+																		<a href="dishes.php?res_id='.(int)$rows['rs_id'].'" class="btn btn-purple">View Menu</a> </div>
 																</div>
 																<!-- end:right info -->
 															</div>';
@@ -158,7 +156,7 @@ session_start();
                         <div class="col-xs-12 col-sm-4 address color-gray">
                                     <h5>Address</h5>
                                     <p>Daffodil International University, Ashulia, Savar</p>
-                                    <h5>Phone: 9876543210</a></h5> </div>
+                                    <h5>Phone: 9876543210</h5> </div>
                                 <div class="col-xs-12 col-sm-5 additional-info color-gray">
                                     <h5>Addition informations</h5>
                                    <p>Join thousands of other restaurants who benefit from having partnered with us.</p>
