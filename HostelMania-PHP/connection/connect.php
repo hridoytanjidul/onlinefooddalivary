@@ -1,10 +1,17 @@
 <?php
 
 // main connection file for both admin & front end
+
+// Default database settings for a local XAMPP install. On a live server, put
+// the real settings in connection/config.php (copy config.example.php).
+// config.php is ignored by git, so passwords never end up on GitHub.
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "onlinefoodphp";
+if (is_file(__DIR__ . '/config.php')) {
+    include __DIR__ . '/config.php';
+}
 
 // Never show PHP errors to visitors, but write them to the server's error log
 // (in XAMPP: xampp/php/logs/php_error_log) so problems can still be found.

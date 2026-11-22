@@ -35,6 +35,32 @@ A PHP and MySQL food-ordering website. Customers browse restaurants, add dishes 
 
 Uploaded images are saved in `admin/Res_img/` (restaurants) and `admin/Res_img/dishes/` (dishes). The web server needs write access to both folders.
 
+## Setup with Docker (no XAMPP needed)
+
+With [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed, run this in the project's root folder:
+
+```bash
+docker compose up -d
+```
+
+Then open <http://localhost:8080> for the shop and <http://localhost:8080/admin/> for the admin panel. The sample database is imported automatically the first time.
+
+- Stop the site: `docker compose stop`
+- Start it again: `docker compose start`
+- Reset to a fresh sample database (deletes local orders, users and so on): `docker compose down -v`
+
+## Deploying to a web host (e.g. InfinityFree)
+
+1. Create a MySQL database in your hosting control panel and import `DATABASE FILE/onlinefoodphp.sql` into it with phpMyAdmin.
+2. Copy `connection/config.example.php` to `connection/config.php` and fill in the database host, username, password and database name from your host. `config.php` is ignored by git, so your password never ends up on GitHub.
+3. Upload the **contents** of the `HostelMania-PHP` folder into the site's web root (`htdocs/` on InfinityFree), using the host's file manager or an FTP client such as FileZilla.
+   - Don't upload the `DATABASE FILE` folder or the `01 LOGIN DETAILS & PROJECT INFO.txt` files, since anyone could download them from a live site.
+4. **Change the admin password.** The demo password below is public, so set a new one on any live site. In phpMyAdmin, run:
+   ```sql
+   UPDATE admin SET password = MD5('your-new-password') WHERE username = 'admin';
+   ```
+   The site replaces this with a secure hash the first time you log in.
+
 ## Demo accounts
 
 These come with the sample database:
